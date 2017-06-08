@@ -1,5 +1,5 @@
 var $log = function(msg) {
-    $('#page-title').innerHTML = msg;
+//    $('#page-title').innerHTML = msg;
 };
 
 var $app = new Framework7({
