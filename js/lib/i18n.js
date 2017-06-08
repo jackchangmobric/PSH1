@@ -84,6 +84,7 @@ var $templates = (function() {
 // Handle Cordova Device Ready Event
 $$(document).on('deviceready', function() {
     var load = function(lang) {
+        lang = 'en-US';
         $log('append1 ' + lang);
         var el = document.createElement('script');
         el.type = 'text/javascript';
