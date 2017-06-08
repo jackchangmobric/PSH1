@@ -84,6 +84,7 @@ var $templates = (function() {
 // Handle Cordova Device Ready Event
 $$(document).on('deviceready', function() {
     var load = function(lang) {
+        $log('append1 ' + lang);
         var el = document.createElement('script');
         el.type = 'text/javascript';
         el.onload = function() {
@@ -92,7 +93,7 @@ $$(document).on('deviceready', function() {
         el.onerror = function() {
             $log('err ' + el.src);
         };
-        $log('append ' + lang);
+        $log('append2 ' + lang);
         document.querySelector('head').appendChild(el);        
         el.src = 'i18n/' + lang + '/strings.js';
     };
