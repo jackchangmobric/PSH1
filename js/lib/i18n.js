@@ -14,7 +14,6 @@ var $strings = function(json) {
 $log(page);
         var def = json[page] || {};
         var elements = $('*[data-i18n-key]', true);
-        console.info(def);
         [].forEach.call(elements, function(el) {
             var key = el.getAttribute('data-i18n-key');
             if (!key) {

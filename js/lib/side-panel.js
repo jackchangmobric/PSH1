@@ -58,5 +58,9 @@ var loadRooms = function() {
     });
     $gateway.updated(loadRooms, false);
 };
-$app.onPageBeforeRemove('new-room', loadRooms);
-$gateway.updated(loadRooms);
+$app.onPageBeforeRemove('new-room', function() {
+    loadRooms();
+});
+$gateway.updated(function() {
+    loadRooms()
+});

@@ -1,24 +1,24 @@
+var floorplandnditem = [null,null,null,null,null];
 $app.onPageInitOrBeforeAnimation('floorplan', function(page) {
     var parent = page.container;
     var container = $(parent, '.page-content > div');
-    var dnditem = [null,null,null,null,null];
     if (container.childNodes.length === 0) {
         document.addEventListener('touchend', function(e) {
-            var el = dnditem[0];
+            var el = floorplandnditem[0];
             if (!el) { return; }
             var mac = el.getAttribute('data-dev-mac');
             var x = el.style.left.replace('px', '') * 1;
             var y = el.style.top.replace('px', '') * 1;
             $gateway.set('pos', [x,y], [mac]);
-            dnditem[0] = null;
+            floorplandnditem[0] = null;
         });
         document.addEventListener('touchmove', function(e) {
-            var el = dnditem[0];
+            var el = floorplandnditem[0];
             if (!el) { return; }
-            var dx = e.touches[0].pageX - dnditem[1];
-            var dy = e.touches[0].pageY - dnditem[2];
-            el.style.left = dx + dnditem[3] + 'px';
-            el.style.top = dy + dnditem[4] + 'px';
+            var dx = e.touches[0].pageX - floorplandnditem[1];
+            var dy = e.touches[0].pageY - floorplandnditem[2];
+            el.style.left = dx + floorplandnditem[3] + 'px';
+            el.style.top = dy + floorplandnditem[4] + 'px';
         });
     }
 
@@ -69,23 +69,21 @@ $app.onPageInitOrBeforeAnimation('floorplan', function(page) {
                     var scr = i.getAttribute('data-binding');
                     eval('(function(o) {' + scr  + '})').call(i, dev);
                 });
-                if (el.draggable) {
-                    return;
-                }
-
+                if (el.draggable) { return; }
                 el.addEventListener('touchstart', function(e) {
-                    dnditem[0] = el;
-                    dnditem[1] = e.touches[0].pageX;
-                    dnditem[2] = e.touches[0].pageY;
-                    var x = dnditem[3] = el.offsetLeft;
-                    var y = dnditem[4] = el.offsetTop;
-                    el.style.position = 'absolute';
-                    el.style.left = x;
-                    el.style.top = y;
-                }, {passive:true});
+                    floorplandnditem[0] = this;
+                    floorplandnditem[1] = e.touches[0].pageX;
+                    floorplandnditem[2] = e.touches[0].pageY;
+                    var x = floorplandnditem[3] = this.offsetLeft;
+                    var y = floorplandnditem[4] = this.offsetTop;
+                    this.style.position = 'absolute';
+                    this.style.left = x;
+                    this.style.top = y;
+                });
                 el.draggable = true;
             });
         }, 0);
     });
+    container.innerHTML = '';
 });
 

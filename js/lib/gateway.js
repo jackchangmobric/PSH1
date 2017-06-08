@@ -14,7 +14,7 @@ var $gateway = (function() {
         return url;
     };
 
-    var refresh = function(devList) {
+    var refresh = function() {
         var df = [].reduce.call(Object.keys(devices), function(dfo, t) {
             var l = devices[t];
             var lf = [].reduce.call(Object.keys(l), function(p, m) {
@@ -119,12 +119,21 @@ var $gateway = (function() {
                     return Promise.resolve(false);
                 });
         },
-        set: function(key, value, list) {
+        set: function(key, value, list, clearOther) {
+            if (clearOther) {
+                [].forEach.call(Object.keys(attributes), function(mac) {
+                    var kv = attributes[mac];
+                    if (kv[key] === value) {
+                        delete kv[key];
+                    }
+                });
+            }
             list.forEach(function(mac) {
                 var kv = (attributes[mac]) || (attributes[mac] = {});
                 kv[key] = value;
             });
             $db.setItem('device-attributes', JSON.stringify(attributes));
+            refresh();
         },
         count: function(filter) {
             var count = 0;

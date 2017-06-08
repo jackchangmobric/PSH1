@@ -63,6 +63,6 @@ $app.onPageInit('new-room', function(page) {
             }
             return i.name;
         }).filter(function(v) { return v; });
-        $gateway.set('room', rid, list);
+        $gateway.set('room', rid, list, true);
     };
 });
