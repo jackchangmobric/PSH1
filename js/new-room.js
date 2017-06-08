@@ -1,15 +1,44 @@
 $app.onPageInit('new-room', function(page) {
-    $('#device-list').setAttribute('data-room-id', 'r_' + new Date().getTime());
+    var rid = page.query.room;
+    if (rid) {
+        $('#device-list').setAttribute('data-room-id', rid);
+    }
+    else {
+        $('#device-list').setAttribute('data-room-id', 'r_' + new Date().getTime());
+    }
 });
 
 $app.onPageInit('new-room', function(page) {
-    $gateway.each(function(type, mac, dev) { return !dev.room; }, function(type, mac, dev) {
-        $('#device-list ul').innerHTML += $templates('#device-select', {
-            mac: mac,
-            '::type': type,
-            name: dev.name || dev.dev,
+    var rid = page.query.room;
+    if (rid) {
+        $gateway.each(null, function(type, mac, dev) {
+            $('#device-list ul').innerHTML += $templates('#device-select', {
+                mac: mac,
+                '::type': type,
+                name: dev.name || dev.dev,
+                checked: (dev.room === rid) ? 'checked' : ''
+            });
         });
-    });
+        var rooms = JSON.parse($db.getItem('user-room') || '{}');
+        var room = rooms[rid];
+        if (!room) {
+            return;
+        }
+
+        $('#dimension-w').value = room.width;
+        $('#dimension-d').value = room.depth;
+        $('#room-name').value = room.name;
+    }
+    else {
+        $gateway.each(function(type, mac, dev) { return !dev.room; }, function(type, mac, dev) {
+            $('#device-list ul').innerHTML += $templates('#device-select', {
+                mac: mac,
+                '::type': type,
+                name: dev.name || dev.dev,
+                checked: ''
+            });
+        });        
+    }
 });
 
 $app.onPageInit('new-room', function(page) {

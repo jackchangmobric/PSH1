@@ -325,3 +325,7 @@
 .jscolor[data-align="middle"] .dropdown {
   left:           -70px;
 }
+
+[data-page='scenario'] .swipeout-actions-right .delete {
+  background: red;
+}

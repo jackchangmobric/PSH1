@@ -20,6 +20,7 @@ $gateway.watch(null, function(type, devices) {
         $app.currentFilter = (type === 'all') ? null : 'type:' + type;
         $('#page-title').innerHTML = $(el, '.item-title').innerHTML;
         $('.toolbar a[href="#floorplan"]').style.display = 'none';
+        $('.navbar a#edit-room').style.display = 'none';
     };
 });
 
@@ -45,11 +46,13 @@ var loadRooms = function() {
             el.onclick = function() {
                 $gateway.filter(function(type, mac, dev) {
                     return dev.room === rid;
-                });                
+                });
                 $app.currentFilter = 'room:' + rid;
                 $mainView.router.loadPage('#floorplan');
                 $('#page-title').innerHTML = $(el, '.item-title').innerHTML;
                 $('.toolbar a[href="#floorplan"]').style.display = null;
+                $('.navbar a#edit-room').style.display = null;
+                $('#edit-room').href = 'new-room.html?room=' + rid;
             };
         });
     });

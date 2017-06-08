@@ -148,7 +148,7 @@ var $gateway = (function() {
                 });
             });
         },
-        saveState: function(namespace, name) {
+        saveState: function(namespace, name, description) {
             var s = {};
             Object.keys(devices).forEach(function(type) {
                 var list = devices[type];
@@ -164,7 +164,15 @@ var $gateway = (function() {
             }
 
             var l = (states[namespace]) || (states[namespace] = {});
-            l[name] = s;
+            l[name] = {
+                description: description,
+                states: s
+            };
+            $db.setItem('device-states', JSON.stringify(states));
+        },
+        deleteState: function(namespace, name) {
+            var l = (states[namespace]) || (states[namespace] = {});
+            delete l[name];
             $db.setItem('device-states', JSON.stringify(states));
         },
         savedStates: function(namespace) {

@@ -15,6 +15,7 @@ $strings({
     'link-scenes': 'Scenes',
     'link-settings': 'Settings',
 
+
     home: {
         'page-title': 'My Home',
         'login-title': 'Sign In',
@@ -65,6 +66,20 @@ $strings({
             'ac_switch': 'Switch',
     },
 
+    'new-scenario': {
+        'done': 'Save',
+        'cancel': 'Cancel',
+        'scenario-information': 'Information',
+            'name': 'Name',
+                'empty-name': 'Night Mood',
+            'description': 'Description',
+                'empty-description': 'Relax for sleep',
+    },
+
+    'scenario': {
+        'saved-scenarios': 'Saved Settings',
+        'delete': 'Delete'
+    },
 
     devices: {
         'page-title': 'Devices',

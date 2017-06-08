@@ -28,7 +28,7 @@ var $api = {
                 ng(e);
             };
             xhttp.open("GET", uri, true);
-            xhttp.send();        
+            xhttp.send();       
         });
     },
     put: function(method, options, data) {
