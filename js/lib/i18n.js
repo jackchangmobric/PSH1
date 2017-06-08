@@ -1,0 +1,104 @@
+var $ = function(parent, sel, all) {
+    if (typeof(parent) === 'string') {
+        var els = document.querySelectorAll(parent);
+        return (sel) ? els : els[0];
+    }
+    else {
+        var els = parent.querySelectorAll(sel);
+        return (all) ? els : els[0];        
+    }
+};
+
+var $strings = function(json) {
+    var localize = function(page) {
+$log(page);
+        var def = json[page] || {};
+        var elements = $('*[data-i18n-key]', true);
+        console.info(def);
+        [].forEach.call(elements, function(el) {
+            var key = el.getAttribute('data-i18n-key');
+            if (!key) {
+                return;
+            }
+
+            var kv = key.split(':');
+            var k = kv[0];
+            var p = kv[1] || 'innerHTML';
+            el[p] = def[k] || json[k] || k;
+        });
+
+        $templates(null, def);
+    };
+
+    $app.onPageInit('*', function(e) {
+        localize(e.name);
+    });
+    $app.onPageBeforeAnimation('*', function(e) {
+        localize(e.name);
+    });
+$log('init');
+    $app.init();
+$log('post-init');
+    // $mainView.router.loadPage('#floorplan');
+};
+
+var $templates = (function() {
+    var cts = {};
+    var lang = {};
+    return function(id, context) {
+        if (!id) {
+            lang = Object.keys(context).reduce(function(p, k) {
+                lang['_lang_' + k] = context[k];
+                return lang;
+            }, {});
+            return ctx = {};
+        }
+
+// console.info(id);
+        var ct = cts[id];
+        if (!ct) {
+            var htm = $$(id).html();
+            if (!htm) {
+                return (cts[id] = function() { return ''; })();
+            }
+            ct = cts[id] = Template7.compile(htm);
+        }
+
+        var ctx = {};
+        Object.keys(lang).forEach(function(k) {
+            ctx[k] = lang[k];
+        });
+        Object.keys(context).forEach(function(k) {
+            if (k.startsWith('::')) {
+                ctx[k.substring(2)] = lang['_lang_' + context[k]];
+            }
+            else {
+                ctx[k] = context[k];                
+            }
+        });
+        return ct(ctx);
+    };
+})();
+
+
+// Handle Cordova Device Ready Event
+$$(document).on('deviceready', function() {
+    var load = function(lang) {
+        var el = document.createElement('script');
+        el.type = 'text/javascript';
+        el.onload = function() {
+            $log('got ' + el.src);
+        };
+        el.onerror = function() {
+            $log('err ' + el.src);
+        };
+        $log('append ' + lang);
+        document.querySelector('head').appendChild(el);        
+        el.src = 'i18n/' + lang + '/strings.js';
+    };
+    $log('deviceready');
+    navigator.globalization.getPreferredLanguage(
+        function(locale) { load(locale.value || 'en-US'); },
+        function() { load('en-US'); }
+    );
+});

@@ -1,0 +1,10 @@
+{
+    "status": 200,
+    "description": "''",
+    "data": {
+        "name": "John Doe",
+        "email": "johndoe@gmail.com",
+        "gender": "male",
+        "gateways": [""]
+    }
+}

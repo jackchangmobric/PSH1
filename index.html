@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta http-equiv='Content-Security-Policy' content="default-src * data: gap: https: ws: 'unsafe-eval' 'unsafe-inline'">
+
+
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui'>
+    <meta name='apple-mobile-web-app-capable' content='yes'>
+    <meta name='apple-mobile-web-app-status-bar-style' content='black'>
+    <meta name='format-detection' content='telephone=no'>
+    <meta name='msapplication-tap-highlight' content='no'>
+
+    <title></title>
+
+    <!-- This template defaults to the iOS CSS theme. To support both iOS and material design themes, see the Framework7 Tutorial at the link below:
+    http://www.idangero.us/framework7/tutorials/maintain-both-ios-and-material-themes-in-single-app.html
+    -->
+
+    <link rel='stylesheet' href='lib/framework7/css/framework7.material.css'>
+    <link rel='stylesheet' href='lib/framework7/css/framework7.material.colors.css'>
+    <link rel='stylesheet' href='css/styles.css'>
+</head>
+
+<body class='theme-lightblue'>
+    <div id='login-screen' class="popup popup-about"><div class="content-block">
+        <div class='login-screen-title' data-i18n-key='app-title'></div>
+        <form>
+            <div class='list-block'>
+                <ul>
+                    <li class='item-content'>
+                        <div class='item-inner'>
+                            <div class='item-title label' data-i18n-key='login-email'></div>
+                            <div class='item-input'>
+                                <input type='text' id='username' name='username' data-i18n-key='login-email-ph:placeholder' placeholder=''>
+                            </div>
+                        </div>
+                    </li>
+                    <li class='item-content'>
+                        <div class='item-inner'>
+                            <div class='item-title label' data-i18n-key='login-password'></div>
+                            <div class='item-input'>
+                                <input type='password' id='password' name='password' data-i18n-key='login-password-ph:placeholder' placeholder=''>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class='list-block'>
+                <ul>
+                    <li><a id='sign-in' href='#' class='button' data-i18n-key='login-title'></a></li>
+                </ul>
+            </div>
+        </form>
+    </div></div>
+
+    <div class='statusbar-overlay'></div>
+    <div class="panel-overlay"></div>
+    <!-- Left panel with cover effect-->
+    <div class="panel panel-left panel-cover">
+        <div class="content-block-title"><span data-i18n-key='device-types'></span></div>
+        <div class="list-block"><ul id='device-type-filter'>
+            <li><a href="#" class="link item-content list-panel-all close-panel item-link"><div class="item-inner">
+                <div class="item-title" data-i18n-key='device-type-all'></div><span data-device-counter='all' class="badge">0</span>
+            </div></a></li>
+            <li><a href="#" class="link item-content list-panel-all close-panel item-link"><div class="item-inner">
+                <div class="item-title" data-i18n-key='device-type-light_wrgb'></div><span data-device-counter='light_wrgb' class="badge">0</span>
+            </div></a></li>
+            <li><a href="#" class="link item-content list-panel-all close-panel item-link"><div class="item-inner">
+                <div class="item-title" data-i18n-key='device-type-ac_switch'></div><span data-device-counter='ac_switch' class="badge">0</span>
+            </div></a></li>
+        </ul></div>
+
+
+        <div class="content-block-title"><span data-i18n-key='my-rooms'></span><i class='button f7-icons close-panel' id='new-room'>add_round</i></div>
+        <div class="list-block"><ul id='room-list'></ul></div>
+    </div>
+
+
+    <div class='views'>
+        <div class='view view-main navbar-fixed toolbar-fixed'>
+            <div class='navbar'>
+                <div class='navbar-inner'>
+                    <div class='left'><a href="#" class="link icon-only open-panel"><i class="icon icon-bars"></i></a></div>
+                    <div class='center sliding' id='page-title'></div>
+                    <div class='right'>
+                        <a id='store-state' class='link'><i class='f7-icons'>tags</i></a>
+                        <a href='settings.html' class='link'><i class='f7-icons'>gear</i></a>
+                    </div>
+                </div>
+            </div>
+            <div class='pages'>
+                <div data-page='home' class='page'>
+                    <div class='page-content'>
+
+                        <script>var homeHandleChangeEvent = {}</script>
+                        <script id="typed-device-list" type="text/template7">
+                            <div class='typed-device-list' data-device-type='{{type}}'>
+                            <div class='content-block-title'>{{deviceType}}</div>
+                            <div class='quick-control'></div>
+                            <div class='list-block'><ul></ul></div>
+                            </div>
+                        </script>
+
+                        <script>
+                            homeHandleChangeEvent.light_wrgb = function(item) {
+                                var waiting = false;
+                                var onoff = $(item, 'input[type=checkbox]');
+                                var wselect = $(item, 'input[type=range]');
+                                var cselect = $(item, '.jscolor');
+                                var jscolor = cselect.jscolor;
+                                if (!jscolor) {
+                                    jscolor = cselect.jscolor = tinycolorpicker(cselect);
+                                    var mac = item.getAttribute('data-dev-mac');
+
+                                    onoff.onchange = function() {
+                                        if (this.checked) {
+                                            $gateway.send('light_wrgb.set_dim_level', {
+                                                mac: mac,
+                                                levelW: wselect.value, levelR: Math.round(cselect.colorData[0] / 2.55), levelG: Math.round(cselect.colorData[1] / 2.55), levelB: Math.round(cselect.colorData[2] / 2.55),
+                                            })
+                                            .then(function() { waiting = false; });
+                                            cselect.disabled = wselect.disabled = null;
+                                        }
+                                        else {
+                                            $gateway.send('light_wrgb.set_dim_level', {
+                                                mac: mac, 
+                                                levelW: 0, levelR: 0, levelG: 0, levelB: 0
+                                            })
+                                            .then(function() { waiting = false; });
+                                            cselect.disabled = wselect.disabled = true;                        
+                                        }
+                                        waiting = true;
+                                    };
+                                    wselect.onchange =
+                                    cselect.onchange = function() {
+                                        $gateway.send('light_wrgb.set_dim_level', {
+                                            mac: mac,
+                                            levelW: wselect.value,
+                                            levelR: Math.round(cselect.colorData[0] / 2.55),
+                                            levelG: Math.round(cselect.colorData[1] / 2.55),
+                                            levelB: Math.round(cselect.colorData[2] / 2.55),
+                                        })
+                                        .then(function(r) { waiting = false; });
+                                        waiting = true;
+                                    };
+                                }
+                                if (!waiting && onoff.checked) {
+                                    wselect.value = wselect.level;
+                                    jscolor.setColor(cselect.value);                
+                                }
+                            };
+                        </script>
+                        <script id="device-info-light_wrgb" type="text/template7">
+                            <li class='device-info-light_wrgb' data-dev-id='{{oid}}' data-dev-mac='{{mac}}'>
+                                <div class='item-content'>
+                                    <div class='item-media'><i class='icon f7-icons'>circle_half</i></div>
+                                    <div class='item-inner'>
+                                        <div class='item-title label'>{{name}}</div>
+                                        <div class='item-input'>
+                                            <label class="label-switch"><input type="checkbox" checked='true'><div class="checkbox"></div></label>
+                                            <span class='range-slider'><input type='range' min='0' max='100' step='1' data-binding='this.level=o.levelW*1'></span>
+                                            <span class="jscolor" data-binding='this.value="#"+rgbString(o)'>
+                                                <a class="color"><div class="colorInner"></div></a>
+                                                <div class="track"></div>
+                                                <ul class="dropdown"><li></li></ul>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </script>
+
+                        <script>
+                            homeHandleChangeEvent.ac_switch = function(item) {
+                                var waiting = false;
+                                var onoff = $(item, 'input[type=checkbox]');
+                                onoff.onchange = function() {
+                                    if (this.checked) {
+                                        $gateway.send('ac_switch.set_dev_status', {
+                                            mac: mac,
+                                            enable: 1
+                                        })
+                                        .then(function() { waiting = false });
+                                    }
+                                    else {
+                                        $gateway.send('ac_switch.set_dev_status', {
+                                            mac: mac, 
+                                            enable: 0
+                                        })
+                                        .then(function() { waiting = false });
+                                    }
+                                    waiting = true;
+                                };
+                                if (!waiting) {
+                                    onoff.checked = onoff.status;
+                                }
+                            }
+                        </script>
+                        <script id="device-info-ac_switch" type="text/template7">
+                            <li class='device-info-ac_switch' data-dev-id='{{oid}}' data-dev-mac='{{mac}}'>
+                                <div class='item-content'>
+                                    <div class='item-media'><i class='icon f7-icons'>play_round_fill</i></div>
+                                    <div class='item-inner'>
+                                        <div class='item-title label'>{{name}}</div>
+                                        <div class='item-input'>
+
+                                            <label class="label-switch">
+                                                <input type="checkbox" data-binding='this.status=statusToChecked(o)'>
+                                                <div class="checkbox"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </script>
+
+
+                        <script>var homeHandleQuickControlEvent = {}</script>
+
+                        <script>
+                            homeHandleQuickControlEvent.light_wrgb = function(item) {
+                                item.addEventListener('click', function() {
+                                    var v = this.getAttribute('data-value');
+                                    if (!v) {
+                                        return;
+                                    }
+
+                                    var val = v.split(',').map(function(a) { return a * 1; });
+                                    $gateway.each(function(type) { return type === 'light_wrgb'; }, function(type, mac) {
+                                        $gateway.send('light_wrgb.set_dim_level', {
+                                            mac: mac, 
+                                            levelW: val[3], levelR: val[0], levelG: val[1], levelB: val[2]
+                                        });
+                                    });
+                                }, {passive:true});
+                            };
+                        </script>
+                        <script id='device-quick-control-light_wrgb' type='text/template7'>
+                            <div class="content-block device-quick-control-light_wrgb"><!-- 
+                             --><div class="quick-control-item chip all-off" data-value='0,0,0,0'><div class="chip-media bg-gray"><i class='f7-icons' >data_fill</i></div><div class="chip-label">{{_lang_all_zero}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-on" data-value='100,100,100,100'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_full}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-half" data-value='100,100,100,50'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_half}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-red" data-value='100,0,0,100'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_red}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-green" data-value='0,100,0,100'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_green}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-blue" data-value='0,0,100,100'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_blue}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-purple" data-value='100,100,0,100'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_purple}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-orange" data-value='100,65,0,100'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_orange}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-unspecified" data-value=''><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_unspecified}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-unspecified" data-value=''><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_unspecified}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-unspecified" data-value=''><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_unspecified}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-unspecified" data-value=''><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_unspecified}}</div></div><!--
+                        --></div>
+                        </script>
+
+                        <script>
+                            homeHandleQuickControlEvent.ac_switch = function(item) {
+                                item.addEventListener('click', function() {
+                                    var v = this.getAttribute('data-value');
+                                    if (!v) {
+                                        return;
+                                    }
+
+                                    $gateway.each(function(type) { return type === 'ac_switch'; }, function(type, mac) {
+                                        $gateway.send('ac_switch.set_dev_status', {
+                                            mac: mac,
+                                            enable: v * 1
+                                        })
+                                    });
+                                }, {passive:true});
+                            };
+                        </script>
+                        <script id='device-quick-control-ac_switch' type='text/template7'>
+                            <div class="content-block device-quick-control-ac_switch"><!-- 
+                             --><div class="quick-control-item chip all-off" data-value='0'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_off}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-on" data-value='1'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_on}}</div></div><!-- 
+                         --></div>
+                        </script>
+                    </div>
+                </div>
+                <div data-page='floorplan' class='page cached'>
+                    <div class='page-content'>
+                        <div style='width: 100%; height: calc(100% - 60px); background: url(data/room.jpg); background-size: 100% 100%; background-repeat: no-repeat; background-position: center center'></div>
+
+                        <script>var floorplanHandleChangeEvent = {}</script>
+                        <script>
+                            floorplanHandleChangeEvent.light_wrgb = function(item) {
+                                var waiting = false;
+                                var onoff = $(item, 'input[type=checkbox]');
+                                var wselect = $(item, 'input[type=range]');
+                                var track = $(item, '.track');
+                                var cselect = item;
+                                var jscolor = cselect.jscolor;
+                                if (!jscolor) {
+                                    jscolor = cselect.jscolor = tinycolorpicker(cselect);
+                                    var mac = item.getAttribute('data-dev-mac');
+
+                                    onoff.onchange = function() {
+                                        if (this.checked) {
+                                            track.disabled = wselect.disabled = null;
+                                            return;
+                                        }
+                                        waiting = true;
+                                        $gateway.send('light_wrgb.set_dim_level', {
+                                            mac: mac, 
+                                            levelW: 0, levelR: 0, levelG: 0, levelB: 0
+                                        })
+                                        .then(function() { waiting = false; });
+                                        track.disabled = wselect.disabled = true;                        
+                                    };
+                                    wselect.onchange =
+                                    cselect.onchange = function() {
+                                        if (!onoff.checked) {
+                                            return;
+                                        }
+                                        console.info(this);
+                                        $gateway.send('light_wrgb.set_dim_level', {
+                                            mac: mac,
+                                            levelW: wselect.value,
+                                            levelR: Math.round(cselect.colorData[0] / 2.55),
+                                            levelG: Math.round(cselect.colorData[1] / 2.55),
+                                            levelB: Math.round(cselect.colorData[2] / 2.55),
+                                        })
+                                        .then(function(r) { waiting = false; });
+                                        waiting = true;
+                                    };
+                                }
+                                if (!waiting && onoff.checked) {
+                                    wselect.value = wselect.level;
+                                    jscolor.setColor(track.value);                
+                                }
+                            };
+                        </script>
+                        <script id='room-control-light_wrgb' type='text/template7'>
+                            <div data-align='middle' class='room-control-item room-control-light_wrgb jscolor' data-dev-id='{{oid}}' data-dev-mac='{{mac}}' style='position:{{pos}};left:{{x}};top:{{y}}'><div class='status'>
+                                <div class='level' data-binding='this.style.backgroundColor="#" + wString(o)'></div>
+                                <div class='color' data-binding='this.style.backgroundColor="#" + rgbString(o)'>
+                                    <!-- <div class="colorInner"></div> -->
+                                </div>
+                                <div class="track" data-binding='this.value="#"+rgbString(o)'></div>
+                                <ul class="dropdown">
+                                    <li><span class='range-slider'><input type='range' data-binding='this.level=o.levelW*1'/></span></li>
+                                    <li><label class="label-switch"><input type='checkbox' checked='true'/><div class="checkbox"></div></label></li>
+                                </ul>                            
+                            </div></div>
+                        </script>    
+
+                        <script id='room-control-ac_switch' type='text/template7'>
+                            <div class='room-control-item room-control-ac_switch' data-dev-id='{{oid}}' data-dev-mac='{{mac}}' style='position:{{pos}};left:{{x}};top:{{y}}'>
+                                <div class='status' data-binding='this.setAttribute("data-value", o.enable)'></div>
+                            </div>
+                        </script>    
+                    </div>
+                </div>
+
+                <div data-page='scenario' class='page cached'>
+                    <div class='page-content'>
+                        <div class="content-block-title" data-i18n-key='saved-scenarios'></div>
+                        <div class="list-block"><ul id='scenario-list'></ul></div>
+
+                        <script>var applySavedScenario = {}</script>
+                        <script id='scenario-item' type='text/template7'>
+                            <li class="item-content scenario-item">
+                                <div class="item-media"><i class="icon f7-icons">today</i></div>
+                                <div class="item-inner">
+                                    <div class="item-title">{{name}}</div>
+                                    <div class="item-after">{{description}}</div>
+                                </div>
+                            </li>
+                        </script>
+
+                        <script>
+                            applySavedScenario.light_wrgb = function(dev) {
+                                $gateway.send('light_wrgb.set_dim_level', {
+                                    mac: dev.mac,
+                                    levelW: dev.levelW, levelR: dev.levelR, levelG: dev.levelG, levelB: dev.levelB
+                                });
+                            };
+                            applySavedScenario.ac_switch = function(dev) {
+                                $gateway.send('ac_switch.set_dev_status', {
+                                    mac: dev.mac,
+                                    enable: dev.enable
+                                });
+                            };
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <div class='toolbar'>
+                <div class='toolbar-inner'>
+                    <a href='#home' class='link'><i class='f7-icons'>list_fill</i></a>
+                    <a href='#floorplan' style='display:none' class='link'><i class='f7-icons'>social_instagram</i></a>
+                    <a href='#scenario' class='link'><i class='f7-icons'>data</i></a>
+                    <a href='#project' class='link'><i class='f7-icons'>compose</i></a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script id='room-panel-item' type='text/template7'>
+    <li><a href="#" data-room-id='{{rid}}' class="link item-content list-panel-all close-panel item-link"><div class="item-inner">
+        <div class="item-title">{{name}}</div><span class="badge">{{count}}</span>
+    </div></a></li>
+</script>
+
+<script type='text/javascript' src='cordova.js'></script>
+<script type='text/javascript' src='lib/framework7/js/framework7.js'></script>
+<script type='text/javascript' src='js/lib/init.js'></script>
+<script type='text/javascript' src='js/lib/gateway.js'></script>
+<script type='text/javascript' src='js/lib/i18n.js'></script>
+<script type='text/javascript' src='js/lib/api.js'></script>
+<script type='text/javascript' src='js/lib/util.js'></script>
+<!-- <script type='text/javascript' src='js/lib/jscolor.min.js'></script> -->
+<script type='text/javascript' src='js/lib/color-wheel.js'></script>
+<script type='text/javascript' src='js/lib/toolbar-links.js'></script>
+<script type='text/javascript' src='js/lib/side-panel.js'></script>
+
+<script type='text/javascript' src='js/home.js'></script>
+<script type='text/javascript' src='js/floorplan.js'></script>
+<script type='text/javascript' src='js/scenario.js'></script>
+<script type='text/javascript' src='js/login-screen.js'></script>
+<script type='text/javascript' src='js/settings.js'></script>
+<script type='text/javascript' src='js/new-room.js'></script>
+</body>
+
+</html>

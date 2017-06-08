@@ -1,0 +1,119 @@
+<!-- Pages container, because we use fixed-through navbar and toolbar, it has additional appropriate classes-->
+<div class='pages'>
+    <div data-page='settings' class='page no-navbar no-toolbar'>
+        <div class='page-content'>
+            <div class='content-block'>
+                <p><a href="#" class="button link back" data-i18n-key='done'></a></p>
+            </div>
+
+            <div class="content-block-title" data-i18n-key='gui-preference'></div>
+            <div class='list-block'>
+                <ul>
+                    <li>
+                        <div class='item-content'>
+                            <div class='item-media'><i class='icon f7-icons'>circle_half</i></div>
+                            <div class='item-inner'>
+                                <div class='item-title label' data-i18n-key='layout-style'></div>
+                                <div class='item-input'>
+                                    <select class='auto-setting' data-setting-root='user-gui' data-setting-key='layout' data-default-value='default' name='layout-style' id='layout-style'>
+                                        <option data-i18n-key='layout-style-default' value='default'></option>
+                                        <option data-i18n-key='layout-style-dark' value='dark'></option>
+                                        <option data-i18n-key='layout-style-white' value='white'></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class='item-content'>
+                            <div class='item-media'><i class='icon f7-icons'>data_fill</i></div>
+                            <div class='item-inner'>
+                                <div class='item-title label' data-i18n-key='theme-style'></div>
+                                <div class='item-input'>
+                                    <select class='auto-setting' data-setting-root='user-gui' data-setting-key='theme' data-default-value='blue' name='theme-style' id='theme-style'>
+                                        <option data-i18n-key='theme-style-blue' value='blue'></option>
+                                        <option data-i18n-key='theme-style-gray' value='gray'></option>
+                                        <option data-i18n-key='theme-style-black' value='black'></option>
+                                        <option data-i18n-key='theme-style-lightblue' value='lightblue'></option>
+                                        <option data-i18n-key='theme-style-yellow' value='yellow'></option>
+                                        <option data-i18n-key='theme-style-orange' value='orange'></option>
+                                        <option data-i18n-key='theme-style-pink' value='pink'></option>
+                                        <option data-i18n-key='theme-style-green' value='green'></option>
+                                        <option data-i18n-key='theme-style-red' value='red'></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="content-block-title" data-i18n-key='user-info'></div>
+            <div class='list-block'>
+                <ul>
+                    <li>
+                        <div class='item-content'>
+                            <div class='item-media'><i class='icon f7-icons'>person</i></div>
+                            <div class='item-inner'>
+                                <div class='item-title label' data-i18n-key='username'></div>
+                                <div class='item-input'>
+                                    <input class='auto-setting' type='text' data-i18n-key='empty-username:placeholder' data-setting-root='user' data-setting-key='name' >
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class='item-content'>
+                            <div class='item-media'><i class='icon f7-icons'>email</i></div>
+                            <div class='item-inner'>
+                                <div class='item-title label' data-i18n-key='email'></div>
+                                <div class='item-input'>
+                                    <input class='auto-setting' type='text' data-i18n-key='empty-email:placeholder' data-setting-root='user' data-setting-key='email' >
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li>
+                        <div class='item-content'>
+                            <div class='item-media'><i class='icon f7-icons'>persons</i></div>
+                            <div class='item-inner'>
+                                <div class='item-title label' data-i18n-key='gender'></div>
+                                <div class='item-input'>
+                                    <select class='auto-setting' data-setting-root='user' data-setting-key='gender' data-default-value='other'>
+                                        <option value='male' data-i18n-key='gender-male'></option>
+                                        <option value='female' data-i18n-key='gender-female'></option>
+                                        <option value='other' data-i18n-key='gender-other'></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="content-block-title" data-i18n-key='gateway-info'></div>
+            <div class='list-block'>
+                <ul>
+                    <li>
+                        <div class='item-content'>
+                            <div class='item-media'><i class='icon f7-icons'>social_rss</i></div>
+                            <div class='item-inner'>
+                                <div class='item-title label' data-i18n-key='gateway'></div>
+                                <div class='item-input'>
+                                    <input class='auto-setting' type='text' data-i18n-key='empty-gateway:placeholder' data-setting-root='user' data-setting-key='gateway' >
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+
+            <div class='content-block'>
+                <p><a id='sign-out' href="#" class="button" data-i18n-key='sign-out'></a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
