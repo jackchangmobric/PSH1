@@ -5,7 +5,8 @@ $strings({
     'my-rooms': 'Rooms',
     'device-types': 'Devices',
     'device-type-all': 'All',
-    'device-type-light_wrgb': 'Lights',
+    'device-type-light_wrgb': 'Color Lights',
+    'device-type-lighting': 'Lights',
     'device-type-ac_switch': 'Switches',
 
     'link-devices': 'Devices',
@@ -22,7 +23,8 @@ $strings({
         'login-email-ph': 'johndoe@gmail.com',
         'login-password-ph': 'some top secrets',
 
-        'light_wrgb': 'Lights',
+        'lighting': 'Lights',
+        'light_wrgb': 'Color Lights',
         'ac_switch': 'Switches',
 
         'all_on': 'On',
@@ -30,6 +32,8 @@ $strings({
         'all_zero': 'Off',
         'all_full': '100%',
         'all_half': '50%',
+        'all_25': '25%',
+        'all_75': '75%',
         'all_red': 'Red',
         'all_green': 'Green',
         'all_blue': 'Blue',

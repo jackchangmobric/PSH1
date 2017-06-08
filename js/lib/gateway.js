@@ -1,5 +1,5 @@
 var $gateway = (function() {
-    var types = ['light_wrgb', 'ac_switch'];
+    var types = ['light_wrgb', 'lighting', 'ac_switch'];
     var devices = {};
     var filter = null;
     var updating = [];
@@ -50,15 +50,21 @@ var $gateway = (function() {
         }, 0);
     };
 
+    var waiting = false;
     var timer = setInterval(function() {  
         var config = $db.getItem('user');
         if (!config) { return; }
+        if (waiting) { return; }
 
         var o = {};
         Promise.all(types.map(function(type) {
             var url = fullUri(config, type + '.get_dev_list');
             return $api.get(url)
                 .then(function(r) {
+                    if (!r.objects) {
+                        return;
+                    }
+
                     r.objects.forEach(function(dev) {
                         if (!dev) { return; }
 
@@ -79,6 +85,8 @@ var $gateway = (function() {
         .then(function() { updating.forEach(function(cb) { cb(); }); })
         .then(function() { devices = o; })
         .then(refresh)
+        .then(function() { waiting = false; });
+        waiting = true;
     }, 1000);
 
     $app.onPageInitOrBeforeAnimation('*', function() {

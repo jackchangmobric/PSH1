@@ -68,6 +68,9 @@
                 <div class="item-title" data-i18n-key='device-type-light_wrgb'></div><span data-device-counter='light_wrgb' class="badge">0</span>
             </div></a></li>
             <li><a href="#" class="link item-content list-panel-all close-panel item-link"><div class="item-inner">
+                <div class="item-title" data-i18n-key='device-type-lighting'></div><span data-device-counter='lighting' class="badge">0</span>
+            </div></a></li>
+            <li><a href="#" class="link item-content list-panel-all close-panel item-link"><div class="item-inner">
                 <div class="item-title" data-i18n-key='device-type-ac_switch'></div><span data-device-counter='ac_switch' class="badge">0</span>
             </div></a></li>
         </ul></div>
@@ -173,6 +176,61 @@
                         </script>
 
                         <script>
+                            homeHandleChangeEvent.lighting = function(item) {
+                                var waiting = false;
+                                var onoff = $(item, 'input[type=checkbox]');
+                                var wselect = $(item, 'input[type=range]');
+                                if (!onoff.onchange) {
+                                    var mac = item.getAttribute('data-dev-mac');
+                                    onoff.onchange = function() {
+                                        if (this.checked) {
+                                            $gateway.send('lighting.set_dim_level', {
+                                                mac: mac,
+                                                level: wselect.value
+                                            })
+                                            .then(function() { waiting = false; });
+                                            wselect.disabled = null;
+                                        }
+                                        else {
+                                            $gateway.send('lighting.set_dim_level', {
+                                                mac: mac, 
+                                                level: 0
+                                            })
+                                            .then(function() { waiting = false; });
+                                            wselect.disabled = true;                        
+                                        }
+                                        waiting = true;
+                                    };
+                                    wselect.onchange = function() {
+                                        $gateway.send('lighting.set_dim_level', {
+                                            mac: mac,
+                                            level: wselect.value
+                                        })
+                                        .then(function(r) { waiting = false; });
+                                        waiting = true;
+                                    };
+                                }
+                                if (!waiting && onoff.checked) {
+                                    wselect.value = wselect.level;
+                                }
+                            };
+                        </script>
+                        <script id="device-info-lighting" type="text/template7">
+                            <li class='device-info-lighting' data-dev-id='{{oid}}' data-dev-mac='{{mac}}'>
+                                <div class='item-content'>
+                                    <div class='item-media'><i class='icon f7-icons'>circle_half</i></div>
+                                    <div class='item-inner'>
+                                        <div class='item-title label'>{{name}}</div>
+                                        <div class='item-input'>
+                                            <label class="label-switch"><input type="checkbox" checked='true'><div class="checkbox"></div></label>
+                                            <span class='range-slider'><input type='range' min='0' max='100' step='1' data-binding='this.level=o.w*1'></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </script>
+
+                        <script>
                             homeHandleChangeEvent.ac_switch = function(item) {
                                 var waiting = false;
                                 var onoff = $(item, 'input[type=checkbox]');
@@ -228,12 +286,22 @@
                                     }
 
                                     var val = v.split(',').map(function(a) { return a * 1; });
+                                    var devices = [];
                                     $gateway.each(function(type) { return type === 'light_wrgb'; }, function(type, mac) {
+                                        devices.push(mac);
+                                    });
+                                    var i = 0;
+                                    var set = function() {
+                                        if (i === devices.length) {
+                                            return;
+                                        }
+                                        var mac = devices[i++];
                                         $gateway.send('light_wrgb.set_dim_level', {
                                             mac: mac, 
                                             levelW: val[3], levelR: val[0], levelG: val[1], levelB: val[2]
                                         });
-                                    });
+                                    };
+                                    set();                                    
                                 }, {passive:true});
                             };
                         </script>
@@ -253,6 +321,47 @@
                              --><div class="quick-control-item chip all-unspecified" data-value=''><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_unspecified}}</div></div><!--
                         --></div>
                         </script>
+
+
+                        <script>
+                            homeHandleQuickControlEvent.lighting = function(item) {
+                                item.addEventListener('click', function() {
+                                    var v = this.getAttribute('data-value');
+                                    if (!v) {
+                                        return;
+                                    }
+
+                                    var val = v * 1;
+                                    var devices = [];
+                                    $gateway.each(function(type) { return type === 'lighting'; }, function(type, mac) {
+                                        devices.push(mac);
+                                    });
+                                    var i = 0;
+                                    var set = function() {
+                                        if (i === devices.length) {
+                                            return;
+                                        }
+                                        var mac = devices[i++];
+                                        $gateway.send('lighting.set_dim_level', {
+                                            mac: mac, 
+                                            level: v
+                                        }).then(set);
+                                    };
+                                    set();
+                                }, {passive:true});
+                            };
+                        </script>
+                        <script id='device-quick-control-lighting' type='text/template7'>
+                            <div class="content-block device-quick-control-lighting"><!-- 
+                             --><div class="quick-control-item chip all-off" data-value='0'><div class="chip-media bg-gray"><i class='f7-icons' >data_fill</i></div><div class="chip-label">{{_lang_all_zero}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-on" data-value='100'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_full}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-half" data-value='50'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_half}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-25" data-value='25'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_25}}</div></div><!-- 
+                             --><div class="quick-control-item chip all-75" data-value='75'><div class="chip-media bg-gray"><i class='f7-icons'>data_fill</i></div><div class="chip-label">{{_lang_all_75}}</div></div><!-- 
+                        --></div>
+                        </script>
+
+
 
                         <script>
                             homeHandleQuickControlEvent.ac_switch = function(item) {

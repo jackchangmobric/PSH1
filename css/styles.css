@@ -75,6 +75,15 @@
 .device-quick-control-light_wrgb .chip.all-orange i { color: orange; }
 .device-quick-control-light_wrgb .chip.all-unspecified i { color: dimgray; }
 
+.device-quick-control-lighting .chip { min-width: 96px; width: calc(100%/3 - 8px); margin: 4px;}
+.device-quick-control-lighting .chip i { font-size: 16px; }
+.device-quick-control-lighting .chip.all-off i { color: black; }
+.device-quick-control-lighting .chip.all-on i { color: white; }
+.device-quick-control-lighting .chip.all-half i { color: gray; }
+.device-quick-control-lighting .chip.all-25 i { color: rgb(64,64,64); }
+.device-quick-control-lighting .chip.all-75 i { color: rgb(192,192,192); }
+
+
 .typed-device-list[data-device-type]:last-child {
   padding-bottom: 48px;
 }
@@ -110,6 +119,26 @@
 .device-info-light_wrgb .item-input > span button.jscolor:focus {
   outline: none;
 }
+
+
+
+
+
+
+.device-info-lighting .item-input > label.label-switch {
+  vertical-align: top; 
+  margin-right: 12px;
+}
+.device-info-lighting .item-input > span.range-slider {
+  display: inline-block;
+  width: calc(100% - 60px);
+  vertical-align: top; 
+  margin-right: 12px;
+}
+
+
+
+
 
 .panel .button.f7-icons {
   font-size: 16px;
