@@ -1,4 +1,4 @@
-var $gateway = (function() {
+var $gateway = (function(fake) {
     var types = ['light_wrgb', 'lighting', 'ac_switch'];
     var devices = {};
     var filter = null;
@@ -59,24 +59,31 @@ var $gateway = (function() {
         var o = {};
         Promise.all(types.map(function(type) {
             var url = fullUri(config, type + '.get_dev_list');
+            var update = function(r) {
+                if (!r.objects) {
+                    return;
+                }
+
+                r.objects.forEach(function(dev) {
+                    if (!dev) { return; }
+
+                    var l = (o[type]) || (o[type] = {});
+                    var a = attributes[dev.mac];
+                    (a) && ([].forEach.call(Object.keys(a), function(k) {
+                        dev[k] = a[k];
+                    }));
+                    dev.type = type;
+                    l[dev.mac] = dev;
+                });
+            };
+
+            if (fake && fake[type]) {
+                update(fake[type]);
+                return Promise.resolve();
+            }
+
             return $api.get(url)
-                .then(function(r) {
-                    if (!r.objects) {
-                        return;
-                    }
-
-                    r.objects.forEach(function(dev) {
-                        if (!dev) { return; }
-
-                        var l = (o[type]) || (o[type] = {});
-                        var a = attributes[dev.mac];
-                        (a) && ([].forEach.call(Object.keys(a), function(k) {
-                            dev[k] = a[k];
-                        }));
-                        dev.type = type;
-                        l[dev.mac] = dev;
-                    });
-                })
+                .then(update)
                 .catch(function(e) {
                     console.error(e);
                     return Promise.resolve();
@@ -103,6 +110,27 @@ var $gateway = (function() {
         send: function(method, options) {
             var config = $db.getItem('user');
             if (!config) { return Promise.resolve(true); }
+
+            if (fake) {
+                var type = method.split('.')[0];
+                var mac = options.mac;
+                var list = (fake[type]) ? (fake[type].objects) : null;
+                if (list && mac) {
+                    return new Promise(function(ok) {
+                        setTimeout(function() {
+                            list.forEach(function(dev) {
+                                if (!dev) { return; }
+                                if (dev.mac !== mac) { return; }
+                                [].forEach.call(Object.keys(options), function(k) {
+                                    if (k === 'mac') { return; }
+                                    dev[k] = options[k];
+                                });
+                            });
+                            ok(true);
+                        }, 300);
+                    });
+                }
+            }
 
             var url = fullUri(config, method);
             if (options) {
@@ -219,4 +247,40 @@ var $gateway = (function() {
             delete watchers[id];
         }
     };
-})();
+})({
+    ac_switch: {
+        "success": "true",
+        "objects": [
+            { "dev": "1812", "mac": "7a624e1608001812", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "0", "": null },
+            { "dev": "1813", "mac": "7a624e1608001813", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "0", "": null },
+            { "dev": "1814", "mac": "7a624e1608001814", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
+            { "dev": "1815", "mac": "7a624e1608001815", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
+            { "dev": "1816", "mac": "7a624e1608001816", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
+            { "dev": "1817", "mac": "7a624e1608001817", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
+            { "dev": "1833", "mac": "7a624e1608001833", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "0", "": null },
+            null
+        ]
+    },
+    light_wrgb: {
+        "success": "true",
+        "objects": [
+            { "dev": "1612", "mac": "7a624e1608001612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
+            { "dev": "1613", "mac": "7a624e1608001613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
+            { "dev": "1617", "mac": "7a624e1608001617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
+            { "dev": "2612", "mac": "7a624e1608002612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
+            { "dev": "2613", "mac": "7a624e1608002613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
+            { "dev": "2617", "mac": "7a624e1608002617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
+            { "dev": "3612", "mac": "7a624e1608003612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
+            { "dev": "3613", "mac": "7a624e1608003613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
+            { "dev": "3617", "mac": "7a624e1608003617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
+            { "dev": "4612", "mac": "7a624e1608004612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
+            { "dev": "4613", "mac": "7a624e1608004613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
+            { "dev": "4617", "mac": "7a624e1608004617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
+            null
+        ]
+    },
+    lighting: {
+        "success": "true",
+        "objects": [null]
+    }
+});

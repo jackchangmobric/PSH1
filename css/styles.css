@@ -63,6 +63,9 @@
   line-height: 24px;
 }*/
 
+.chip {
+  box-shadow: 2px 2px 6px dimgray;
+}
 .device-quick-control-light_wrgb .chip { min-width: 96px; width: calc(100%/3 - 8px); margin: 4px;}
 .device-quick-control-light_wrgb .chip i { font-size: 16px; }
 .device-quick-control-light_wrgb .chip.all-off i { color: black; }
@@ -86,6 +89,19 @@
 
 .typed-device-list[data-device-type]:last-child {
   padding-bottom: 48px;
+}
+
+.device-info-light_wrgb .item-media i {
+    background-image: -webkit-linear-gradient(top,       #F00, #080, #00F); /* For Chrome and Safari */
+    background-image:    -moz-linear-gradient(top,       #F00, #080, #00F); /* For old Fx (3.6 to 15) */
+    background-image:     -ms-linear-gradient(top,       #F00, #080, #00F); /* For pre-releases of IE 10*/
+    background-image:      -o-linear-gradient(top,       #F00, #080, #00F); /* For old Opera (11.1 to 12.0) */
+    background-image:         linear-gradient(to bottom, #F00, #080, #00F); /* Standard syntax; must be last */
+  color:transparent;
+  -webkit-background-clip: text;
+  background-clip: text;  
+  padding: 1px;
+  line-height: 27px;
 }
 
 .device-info-light_wrgb .item-input > label.label-switch {
@@ -189,7 +205,7 @@
     line-height: 38px;
     vertical-align: middle;
     text-align: center;
-    box-shadow: 0px 0px 8px black;
+    box-shadow: 2px 2px 8px black;
 }
 
 .room-control-light_wrgb .status {
