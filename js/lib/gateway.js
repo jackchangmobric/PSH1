@@ -8,7 +8,7 @@ var $gateway = (function(fake) {
     var wid = new Date().getTime();
 
     var fullUri = function(config, method) {
-        var srv = JSON.parse(config).gateway || '10.10.1.1:8080';
+        var srv = config.gateway || '10.10.1.1:8080';
         var url = '/' + method;
         url = 'http://' + srv + url;
         return url;
@@ -52,7 +52,7 @@ var $gateway = (function(fake) {
 
     var waiting = false;
     var timer = setInterval(function() {  
-        var config = $db.getItem('user');
+        var config = $db.user;
         if (!config) { return; }
         if (waiting) { return; }
 
@@ -82,7 +82,7 @@ var $gateway = (function(fake) {
                 return Promise.resolve();
             }
 
-            return $api.get(url)
+            return $http.get(url)
                 .then(update)
                 .catch(function(e) {
                     console.error(e);
@@ -96,7 +96,7 @@ var $gateway = (function(fake) {
         waiting = true;
     }, 1000);
 
-    $app.onPageInitOrBeforeAnimation('*', function() {
+    $app.onPageChange('*', function() {
         watchers = [].reduce.call(Object.keys(watchers), function(p, wid) {
             var w = watchers[wid];
             if (w[2]) { p[wid] = w; }
@@ -104,11 +104,11 @@ var $gateway = (function(fake) {
         }, {});
     });
 
-    var attributes = JSON.parse($db.getItem('device-attributes') || '{}');
-    var states = JSON.parse($db.getItem('device-states') || '{}');
+    var attributes = $db.deviceAttributes;
+    var savedStates = $db.savedStates;
     return {
         send: function(method, options) {
-            var config = $db.getItem('user');
+            var config = $db.user;
             if (!config) { return Promise.resolve(true); }
 
             if (fake) {
@@ -138,7 +138,7 @@ var $gateway = (function(fake) {
                     return k + '=' + options[k];
                 }).join('&')
             }
-            return $api.get(url)
+            return $http.get(url)
                 .then(function(r) {
                     return (r.success) ? Promise.resolve(true) : Promise.resolve(false);
                 })
@@ -160,7 +160,7 @@ var $gateway = (function(fake) {
                 var kv = (attributes[mac]) || (attributes[mac] = {});
                 kv[key] = value;
             });
-            $db.setItem('device-attributes', JSON.stringify(attributes));
+            attributes.$save();
             refresh();
         },
         count: function(filter) {
@@ -185,6 +185,8 @@ var $gateway = (function(fake) {
                 });
             });
         },
+
+
         saveState: function(namespace, name, description) {
             var s = {};
             Object.keys(devices).forEach(function(type) {
@@ -205,12 +207,12 @@ var $gateway = (function(fake) {
                 description: description,
                 states: s
             };
-            $db.setItem('device-states', JSON.stringify(states));
+            savedStates.$save();
         },
         deleteState: function(namespace, name) {
             var l = (states[namespace]) || (states[namespace] = {});
             delete l[name];
-            $db.setItem('device-states', JSON.stringify(states));
+            savedStates.$save();
         },
         savedStates: function(namespace) {
             var l = states[namespace];
@@ -240,7 +242,12 @@ var $gateway = (function(fake) {
         },
         watch: function(type, cb, persistent) {
             var id = wid++;
-            watchers[id] = [type, cb, persistent];
+            if (typeof(type) === 'string') {
+                watchers[id] = [type, cb, persistent];
+            }
+            else {                
+                watchers[id] = [null, type, cb];
+            }
             return id;
         },
         unwatch: function(id) {
@@ -281,6 +288,11 @@ var $gateway = (function(fake) {
     },
     lighting: {
         "success": "true",
-        "objects": [null]
+        "objects": [
+            { "dev": "6613", "mac": "7a624e1608006613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "level": "100", "": null },
+            { "dev": "6617", "mac": "7a624e1608006617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "level": "80", "": null },
+            { "dev": "6612", "mac": "7a624e1608006612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "level": "12", "": null },
+            { "dev": "6613", "mac": "7a624e1608006613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "level": "100", "": null },
+        null]
     }
 });

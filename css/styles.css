@@ -1,3 +1,20 @@
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+html {
+}
+
+#app-space {
+  opacity: 0;
+}
+
+#boot-video {
+  opacity: 1;
+  -webkit-transition: opacity 1s; /* Safari */
+  transition: opacity 1s;
+}
+
 @font-face {
   font-family: 'Framework7 Icons';
   font-style: normal;
@@ -46,6 +63,14 @@
 .statusbar-overlay {
   background: #000000;
 }
+
+
+.button[data-disabled=true] {
+  color: #BBB !important;
+}
+
+
+
 /*
 .panel-left .content-block a {
   margin-bottom: 16px;
@@ -168,13 +193,6 @@
 .device-quick-control-ac_switch .chip.all-on i { color: white; }
 
 
-[data-page="new-room"] #dimension span {
-  display: inline-block;
-}
-[data-page="new-room"] #dimension input {
-  width: calc(50% - 10px);
-  display: inline-block;
-}
 
 [data-page="floorplan"] .page-content .square {
   display: inline-block;

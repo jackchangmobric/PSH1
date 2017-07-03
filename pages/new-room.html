@@ -1,0 +1,219 @@
+<div data-page='new-room' class='page no-navbar no-toolbar'>
+    <style>
+        #dimension span {
+          display: inline-block;
+          width: 20px
+        }
+        #room-information input {
+          padding: 0px 8px !important;            
+        }
+        #dimension input {
+          width: calc(50% - 10px);
+          display: inline-block;
+        }
+
+        input[data-error] {
+            background-color: #ff9696 !important;
+        }
+        #room-icon-list {
+            overflow-y: hidden;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+        #room-icon-list img {
+            width: 80px;
+            padding: 8px;
+        }
+        #room-icon-list img[data-active] {
+            background-color: #03a9f4;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .24);
+        }
+        #device-list .mac {
+            margin-left: 24px;
+            color: gray;
+        }
+        .accessory {
+            float: right;
+            color: #88F;
+        }
+    </style>
+    <script>
+        $app.onload(function() {
+            if (Object.keys($db.rooms).length !== 0) {
+                return;
+            }
+            $('#cancel').setAttribute('data-disabled', true);
+        });
+        $app.onload(function() {
+            var l = [];
+            for (var i = 1; i <= 8; ++i) {
+                l.push('<img src="/img/room-icons/' + i + '.png">')
+            }
+            $('#room-icon-list').innerHTML = l.join('');
+        });
+        $app.onload(function() {
+            var icons = $('#room-icon-list img', true);
+            icons.forEach(function(icon) { icon.onclick = function() {
+                icons.forEach(function(i) {
+                    if (i === icon) { i.setAttribute('data-active', true); }
+                    else            { i.removeAttribute('data-active'); }
+                });
+            }; });
+        });
+        $app.onload(function(e) {
+            var rid = e.query.rid;
+            if (!rid) {
+                rid = 'r_' + Date.now();
+            }
+            $('#room-id').value = rid;
+
+            var room = $db.rooms[rid];
+            if (!room) { 
+                $('#room-icon-list img').onclick();
+            }
+            else {
+                $('#room-information input', true).forEach(function(i) {
+                    i.value = room[i.id];
+                });
+                $('#room-icon-list img', true).forEach(function(i) {
+                    if (i.src === room.icon) {
+                        i.onclick();
+                    }
+                });
+            }
+        });
+        $app.onload(function() {
+            $('#save').onclick = function() {
+                $('#room-information input', true).forEach(function(i) {
+                    if (!i.value) {
+                        i.setAttribute('data-error', true);
+                    }
+                    else {
+                        i.removeAttribute('data-error'); 
+                    }
+                });
+
+                if ($('#room-information input[data-error]', true).length) {
+                    return;
+                }
+
+                var rid = $('#room-id').value;
+                var devs = $('#device-list input:checked', true);
+                $gateway.set('room', rid, devs.map(function(i) { 
+                    return i.value; 
+                }));
+                $db.rooms.$update(function(o) {
+                    if (!rid) { return; }
+
+                    var r = (o[rid]) || (o[rid] = {});
+                    $('#room-information input', true).forEach(function(i) {
+                        r[i.id] = i.value;
+                    });
+                    r.icon = $('#room-icon-list img[data-active]').src;
+                }).$save();
+
+                var rooms = Object.keys($db.rooms);
+                if (rooms.length === 1) {
+                    $mainView.router.loadPage('/pages/room-view.html?rid=' + rooms[0]);
+                }
+                else {
+                    $mainView.router.loadPage('/pages/room-list.html');
+                }
+            };
+        });
+        $app.onload(function() {
+            $('#select-all').onclick = function() {
+                $('#device-list input', true).forEach(function(i) {
+                    i.checked = true;
+                });
+                $('#select-all').style.display = 'none';
+                $('#deselect-all').style.display = 'inline';
+            };
+            $('#deselect-all').onclick = function() {
+                $('#device-list input', true).forEach(function(i) {
+                    i.checked = false;
+                });
+                $('#select-all').style.display = null;
+                $('#deselect-all').style.display = 'none';
+            };
+        });
+        $app.onload(function() {
+            var load = function(devices) {
+                var entries = [];
+                [].forEach.call(Object.keys(devices), function(type) {
+                    var list = devices[type];
+                    [].forEach.call(Object.keys(list), function(mac) {
+                        var dev = list[mac];
+                        if (dev.room) { return; }
+
+                        entries.push($templates('#device-select', {
+                            mac: dev.mac,
+                            name: dev.name || dev.dev,
+                            checked: false
+                        }));
+                    });
+                });
+                $('#device-list').innerHTML = entries.join('');
+                $gateway.updated(load, false);
+            };
+            $gateway.updated(load);
+        });
+    </script>
+
+    <script id="device-select" type="text/template7">
+        <li data-dev-id='m_{{mac}}'>
+            <label class="label-checkbox item-content">
+            <input type="checkbox" name="{{mac}}" value="{{mac}}" {{checked}}>
+                <div class="item-media"><i class="icon icon-form-checkbox"></i></div>
+                <div class="item-inner"><div class="item-title">{{type}} {{name}}<span class='mac'>{{mac}}</span></div></div>
+            </label>
+        </li>
+    </script>
+
+    <div class='page-content'>
+        <div class='login-screen-title' data-i18n-key='page-title'></div>
+        <div class="content-block-title" data-i18n-key='room-information'></div>
+        <input type='hidden' id='room-id'>
+        <div class='list-block' id='room-information'>
+            <ul>
+                <li><div class='item-content'>
+                    <div class='item-media'><i class='icon f7-icons'>info</i></div>
+                    <div class='item-inner'>
+                        <div class='item-title label' data-i18n-key='name'></div>
+                        <div class='item-input'>
+                            <input type='text' id='name' data-i18n-key='empty-name:placeholder'>
+                        </div>
+                    </div>
+                </div></li>
+                <li><div class='item-content'>
+                    <div class='item-media'><i class='icon f7-icons'>tabs</i></div>
+                    <div class='item-inner' id='dimension'>
+                        <div class='item-title label' data-i18n-key='dimension'></div>
+                        <div class='item-input'>
+                            <input type='number' id='w' data-i18n-key='dimensionW:placeholder'>
+                            <span></span>
+                            <input type='number' id='d' data-i18n-key='dimensionD:placeholder'>
+                        </div>
+                    </div>
+                </div></li>
+            </ul>
+        </div>
+        <div class="content-block-title" data-i18n-key='room-icon'></div>
+        <div class='list-block'><div class='item-content'><div id='room-icon-list'></div></div></div>
+
+        <div class="content-block-title"><span data-i18n-key='device-list'></span>
+            <span class='accessory' id='select-all' data-i18n-key='select-all'></span>
+            <span class='accessory' id='deselect-all' data-i18n-key='unselect-all' style='display:none'></span>
+        </div>
+        <div class='list-block'><ul id='device-list'></ul></div>
+
+        <div class='content-block'>
+            <p class="buttons-row">
+                <a href="#" id='cancel' class="button button-raised link" data-i18n-key='cancel'></a>
+                <a href="#" id='save' class="button button-fill button-raised link" data-i18n-key='done'></a>
+            </p>
+        </div>
+    </div>
+</div>
