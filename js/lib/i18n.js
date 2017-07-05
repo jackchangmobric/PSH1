@@ -24,12 +24,13 @@ var $strings = function(json) {
         localize(e.name);
     });
         $app.init();
-    // window.plugins.html5Video.initialize({
-    //     'boot-video': 'img/boot2.m4v'
-    // });
-    // window.plugins.html5Video.play('boot-video', function(e) {
-    //     $app.init();
-    // });
+        return;
+    window.plugins.html5Video.initialize({
+        'boot-video': 'img/boot2.m4v'
+    });
+    window.plugins.html5Video.play('boot-video', function(e) {
+        $app.init();
+    });
 
 // console.info()
 // window.plugins.videoPlayer.play("file:///path/to/my/video.mp4");
@@ -79,7 +80,6 @@ var $templates = (function() {
 $$(document).on('deviceready', function() {
     var load = function(lang) {
         lang = 'en-US';
-        $log('append1 ' + lang);
         var el = document.createElement('script');
         el.type = 'text/javascript';
         el.onload = function() {

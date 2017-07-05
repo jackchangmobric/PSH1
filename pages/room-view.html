@@ -29,6 +29,15 @@
             border-radius: 100%;
             display: block;
         }
+        #room-grid-outer {
+            position:absolute;
+            top:0px;
+            bottom:0px;
+            left:8px;
+            right:8px;
+            overflow-y:auto;
+            padding-top: 32px;
+        }
         #room-grid {
             width: 100%;
             margin: 48px 0px 96px 0px;
@@ -40,7 +49,7 @@
         #room-grid td {
             padding: 0px;
             overflow: hidden;
-            border: 1px dashed gray;
+            border: thin dashed lightgray;
             white-space: nowrap;
             position: relative;
             overflow: visible;
@@ -82,7 +91,8 @@
             box-shadow: -2px -2px 4px lightgray;
         }
         #saved-modes {
-            position: fixed;
+            z-index: 90;
+            position: absolute;
             left: calc(50% - 48px);
             bottom: -48px;
             min-width: 96px;
@@ -95,6 +105,31 @@
         }
         #saved-modes > * {
             font-size: 36px;
+        }
+        #saved-modes-panel {
+            height: auto;
+            box-shadow: 2px -2px 4px lightgrey;
+            /*z-index: 80;*/
+            /*position: absolute;*/
+            /*bottom: calc(0px - 100%);*/
+            /*-webkit-transition: bottom 0.8s; /* Safari */
+            /*transition: bottom 0.8s;*/
+        }
+        #saved-modes-panel > div {
+            /*padding: 16px;*/
+        }
+        #saved-modes-panel a {
+            display: inline-block;
+            border-radius: 48px;
+            height: 48px;
+            width: 48px;
+            padding: 5px;
+            /*box-shadow: 2px 2px 6px gray;*/
+            font-size: 32px;
+            margin: 8px;
+        }
+        #saved-modes-panel a i {
+            line-height: 36px;
         }
         #picker-lighting {
             height: 230px;
@@ -118,24 +153,29 @@
             // var vw = Math.floor(Math.max(100 / room.w, 100 / room.d));
             var vw = 'calc((100vw - ' + (35 + room.w * 1) + 'px)/' + room.w + ')';
             var cell = '<td style="width:X;max-width:X;height:X;max-height:X;"></td>'
-                .replace(/X/g, vw);
+            .replace(/X/g, vw);
             var rows = [];
             for (var d = 0; d < room.d; ++d) {
                 var row = [];
                 for (var w = 0; w < room.w; ++w) { row.push(cell); }
-                rows.push('<tr>' + row.join('') + '</tr>');
+                    rows.push('<tr>' + row.join('') + '</tr>');
             }
             $('#room-grid').innerHTML = rows.join('');
 
         });
         $app.onload(function() {
             var editing = false;
-            var timer = null;
             var dnd = [null, null, null];
             $('#edit-done').onclick = function() {
                 editing = false;
                 $('[data-page="room-view"]').removeAttribute('data-editable');
+                $('.picker-modal', true).forEach(function(p) {
+                    p.id = p.id.substring(1);
+                });
             };
+            $app.touchstart(function(e) {
+                $app.closeModal();
+            });
             $app.touchmove(function(e) {
                 var icon = dnd[0];
                 if (!icon) { return; }
@@ -146,14 +186,13 @@
                 icon.style.top = dy + 'px';
                 icon.style.left = dx + 'px';
             });
-            $app.touchend(function(e) { if (timer) { clearTimeout(timer); } });
             $app.touchend(function(e) {
                 var icon = dnd[0];
                 if (!icon) { return; }
 
                 var touch = e.changedTouches[0];
                 var x = touch.pageX;
-                var y = touch.pageY + $('.page-content').scrollTop;
+                var y = touch.pageY + $('#room-grid-outer').scrollTop;
                 var slot = $('#room-grid td', true).filter(function(i) {
                     return !i.innerHTML;
                 }).find(function(i) {
@@ -174,7 +213,7 @@
                     $gateway.set('x', xv, [mac]);
                     $gateway.set('y', yv, [mac]);
                 }
-                $('.page-content').style.overflowY = 'auto';
+                $('#room-grid-outer').style.overflowY = 'auto';
                 icon.style.top = icon.style.left = null;
                 dnd[0] = null;
             });
@@ -214,7 +253,7 @@
                             dnd[0] = icon;
                             dnd[1] = e.touches[0].pageX;
                             dnd[2] = e.touches[0].pageY;                                
-                            $('.page-content').style.overflowY = 'hidden';
+                            $('#room-grid-outer').style.overflowY = 'hidden';
                         });
                         icon.removeAttribute('data-new');
                     });
@@ -222,58 +261,64 @@
                 $app.onload(function() {
                     $('#enable-edit').onclick = function() {
                         $('[data-page="room-view"]').setAttribute('data-editable', true);
+                        $('.picker-modal', true).forEach(function(p) {
+                            p.id = '_' + p.id;
+                        });
                         editing = true;
                     };
                 });
             });
         });
-        $app.onload(function() {
-        });
-    </script>
+</script>
 
-    <!-- var types = ['light_wrgb', 'lighting', 'ac_switch']; -->
-    <script id="device-icon-light_wrgb" type="text/template7"><a class='device-icon open-picker' data-picker='#picker-lighting' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{levelW}}%,{{levelW}}%,{{levelW}}%)'><span class='center' style='background:rgb({{levelR}}%,{{levelG}}%,{{levelB}}%)'></span></a></script>
-    <script id="device-icon-lighting" type="text/template7"><a class='device-icon open-picker' data-picker='#picker-lighting' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{level}}%,{{level}}%,{{level}}%)'></a></script>
+<!-- var types = ['light_wrgb', 'lighting', 'ac_switch']; -->
+<script id="device-icon-light_wrgb" type="text/template7"><a class='device-icon open-picker' data-picker='#picker-lighting' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{levelW}}%,{{levelW}}%,{{levelW}}%)'><span class='center' style='background:rgb({{levelR}}%,{{levelG}}%,{{levelB}}%)'></span></a></script>
+<script id="device-icon-lighting" type="text/template7"><a class='device-icon open-picker' data-picker='#picker-lighting' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{level}}%,{{level}}%,{{level}}%)'></a></script>
 
-    <div class="navbar">
-        <div class="navbar-inner">
-            <div class="left"><a class='link' href='#' id='go-to-list'><i class='icon f7-icons'>chevron_left</i></a></div>
-            <div class="center" id='room-name'></div>
-            <div class="right"><a class='link' href='#' id='enable-edit'><i class='icon f7-icons'>more_vertical</i></a></div>
-        </div>
+<div class="navbar">
+    <div class="navbar-inner">
+        <div class="left"><a class='link' href='#' id='go-to-list'><i class='icon f7-icons'>chevron_left</i></a></div>
+        <div class="center" id='room-name'></div>
+        <div class="right"><a class='link' href='#' id='enable-edit'><i class='icon f7-icons'>more_vertical</i></a></div>
     </div>
-
-
-    <div class='page-content' style='overflow-y: auto'>
-
-        <div class='picker-modal' id='picker-lighting'>
-            <div class="picker-modal-inner">
-                <div class="content-block">
-<div class='list-block'>
-<div class="item-input">
-<div class="range-slider">
-<input type="range" min="0" max="100" step="1">
-</div>
-</div>
 </div>
 
-<div class='list-block'>
-<a href="#" id='apply-all' class="button button-raised link" data-i18n-key='apply-all'></a>
-</div>
-<div class='list-block'>
-<a href="#" id='apply-all' class="close-picker button button-fill button-raised link" data-i18n-key='done'></a>
-</div>
 
+<div class='page-content' style='overflow-y: auto'>
+
+    <div class='picker-modal' id='picker-lighting'>
+        <div class="picker-modal-inner">
+            <div class="content-block">
+                <div class='list-block'>
+                    <div class="item-input">
+                        <div class="range-slider">
+                            <input type="range" min="0" max="100" step="1">
+                        </div>
+                    </div>
                 </div>
+
+                <div class='list-block'>
+                    <a href="#" id='apply-all' class="button button-raised link" data-i18n-key='apply-all'></a>
+                </div>
+                <div class='list-block'>
+                    <a href="#" id='apply-all' class="close-picker button button-fill button-raised link" data-i18n-key='done'></a>
+                </div>
+
             </div>
         </div>
-
-        <div class='content-block'>
-            <table id='room-grid'></table>
-            <a id='saved-modes' class='button button-fill raised'><i class='icon f7-icons'>filter-fill</i></a>
-        </div>
-        <div class="content-block" id='edit-done-panel'>
-            <a href="#" id='edit-done' class="button button-fill button-raised link" data-i18n-key='done'></a>
-        </div>
     </div>
+
+    <!-- <div class='content-block'> -->
+    <div id='room-grid-outer'><table id='room-grid'></table></div>
+    <!-- </div> -->
+    <a id='saved-modes' class='button button-fill open-picker' data-picker='#saved-modes-panel'><i class='icon f7-icons'>filter-fill</i></a>
+    <div class='picker-modal' id='saved-modes-panel'><div class='picker-modal-inner'><div class='content-block'>
+        <a id='all-on' class='button button-fill'><i class='icon f7-icons'>data_fill</i></a>
+        <a id='all-off' class='button button-fill'><i class='icon f7-icons'>data</i></a>
+    </div></div></div>
+
+    <div class="content-block" id='edit-done-panel'>
+        <a href="#" id='edit-done' class="button button-fill button-raised link" data-i18n-key='done'></a>
+    </div>
+</div>
 </div>

@@ -8,7 +8,7 @@
           padding: 0px 8px !important;            
         }
         #dimension input {
-          width: calc(50% - 10px);
+          width: 60%;
           display: inline-block;
         }
 
@@ -49,7 +49,7 @@
         $app.onload(function() {
             var l = [];
             for (var i = 1; i <= 8; ++i) {
-                l.push('<img src="/img/room-icons/' + i + '.png">')
+                l.push('<img src="img/room-icons/' + i + '.png">')
             }
             $('#room-icon-list').innerHTML = l.join('');
         });
@@ -116,10 +116,10 @@
 
                 var rooms = Object.keys($db.rooms);
                 if (rooms.length === 1) {
-                    $mainView.router.loadPage('/pages/room-view.html?rid=' + rooms[0]);
+                    $mainView.router.loadPage('pages/room-view.html?rid=' + rooms[0]);
                 }
                 else {
-                    $mainView.router.loadPage('/pages/room-list.html');
+                    $mainView.router.loadPage('pages/room-list.html');
                 }
             };
         });
@@ -193,7 +193,6 @@
                         <div class='item-title label' data-i18n-key='dimension'></div>
                         <div class='item-input'>
                             <input type='number' id='w' data-i18n-key='dimensionW:placeholder'>
-                            <span></span>
                             <input type='number' id='d' data-i18n-key='dimensionD:placeholder'>
                         </div>
                     </div>

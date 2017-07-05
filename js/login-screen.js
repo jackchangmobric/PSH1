@@ -21,14 +21,14 @@ $app.onPageInit('login', function (page) {
         var rooms = Object.keys($db.rooms);
         if (rooms.length === 1) {
             console.info('goto ' + rooms[0]);
-            $mainView.router.loadPage('/pages/room-view.html?rid=' + rooms[0]); 
+            $mainView.router.loadPage('pages/room-view.html?rid=' + rooms[0]); 
         }
         else if (rooms.length) {
             console.info('goto room list');
-            $mainView.router.loadPage('/pages/room-list.html');  
+            $mainView.router.loadPage('pages/room-list.html');  
         }
         else {
-            $mainView.router.loadPage('/pages/new-room.html?rid=foobar');            
+            $mainView.router.loadPage('pages/new-room.html?rid=foobar');            
         }
     }
     else {
@@ -38,7 +38,7 @@ $app.onPageInit('login', function (page) {
             login(username, password)
                 .then(function(user) {
                     $db.user.$copy(user).$save();
-                    $mainView.router.loadPage('/pages/new-room.html');
+                    $mainView.router.loadPage('pages/new-room.html');
                 })
                 .catch(function() {
 

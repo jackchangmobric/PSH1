@@ -1,6 +1,5 @@
 var $log = function(msg) {
-    console.log(msg);
-//    $('#page-title').innerHTML = msg;
+   $('#log-item').innerHTML = msg;
 };
 
 var $app = new Framework7({
@@ -116,3 +115,4 @@ var $db = (function() {
         }
     };
 })();
+
