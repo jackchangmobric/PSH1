@@ -1,324 +1,447 @@
 <div data-page='room-view' class='page navbar-fixed'>
-    <style>
-        @keyframes wiggle {
-            0% { transform: rotate(0deg); }
-            8% { transform: rotate(-10deg); }
-            16% { transform: rotate(0deg); }
-            24% { transform: rotate(10deg); }
-            32% { transform: rotate(0deg); }
-            40% { transform: rotate(-10deg); }
-            48% { transform: rotate(0deg); }
-            56% { transform: rotate(10deg); }
-            100% { transform: rotate(0deg); }
-        }
-        .device-icon {
-            z-index: 10;
-            top: 0px;
-            position: absolute;
-            display: block;
-            width: calc(100% - 10px);
-            height: calc(100% - 8px);
-            border-radius: 4px;
-            margin: 4px;
-            box-shadow: 2px 2px 6px gray;
-        }
-        .device-icon .center {
-            width: 50%;
-            height: 50%;
-            margin: 25%;
-            border-radius: 100%;
-            display: block;
-        }
-        #room-grid-outer {
-            position:absolute;
-            top:0px;
-            bottom:0px;
-            left:8px;
-            right:8px;
-            overflow-y:auto;
-            padding-top: 32px;
-        }
-        #room-grid {
-            width: 100%;
-            margin: 48px 0px 96px 0px;
-            table-layout: fixed;
-            border: 3px double black;
-            border-collapse: collapse;
-            border-spacing: 0px;
-        }
-        #room-grid td {
-            padding: 0px;
-            overflow: hidden;
-            border: thin dashed lightgray;
-            white-space: nowrap;
-            position: relative;
-            overflow: visible;
-        }
-        .popover {
-            width: 100%;
-        }
-        [data-page="room-view"][data-editable] #room-grid .device-icon {
-            animation: wiggle 1s infinite;  
-        }
-        [data-page="room-view"][data-editable] #room-grid, 
-        [data-page="room-view"][data-editable] #room-grid td {
-            border-color: #f44336;
-            border-style: dotted;
-        }
-        [data-page="room-view"][data-editable] .device-icon {
-            /*box-shadow: 4px 2px 4px #53a8fe;*/
+<style>
+    @keyframes wiggle {
+        0% { transform: rotate(0deg); }
+        8% { transform: rotate(-10deg); }
+        16% { transform: rotate(0deg); }
+        24% { transform: rotate(10deg); }
+        32% { transform: rotate(0deg); }
+        40% { transform: rotate(-10deg); }
+        48% { transform: rotate(0deg); }
+        56% { transform: rotate(10deg); }
+        100% { transform: rotate(0deg); }
+    }
+    .device-icon {
+        z-index: 10;
+        top: 0px;
+        position: absolute;
+        display: block;
+        width: calc(100% - 10px);
+        height: calc(100% - 8px);
+        border-radius: 4px;
+        margin: 4px;
+        /*box-shadow: 2px 2px 6px gray;*/
+        background: none !important;
+    }
+    .device-icon .center {
+        width: 50%;
+        height: 50%;
+        margin: 25%;
+        border-radius: 100%;
+        display: block;
+    }
+    .device-icon i.fa {
+        position:absolute;
+        top:50%;
+        width:100%;
+        transform:translate(0,-50%);
+        text-align:center;
+        font-size: 70%;
+        text-shadow: 2px 2px 8px gray;
+    }
+    #room-grid-outer {
+        position:absolute;
+        top:0px;
+        bottom:0px;
+        left:0px;
+        right:0px;
+        overflow-y:auto;
+        /*padding-top: 32px;*/
+        padding: 32px 8px 0px 8px;
+    }
+    #room-grid {
+        width: 100%;
+        margin: 48px 0px 96px 0px;
+        table-layout: fixed;
+        border: 3px solid #444;
+        border-collapse: collapse;
+        border-spacing: 0px;
+        transform-origin: top left;
+    }
+    #room-grid td {
+        padding: 0px;
+        overflow: hidden;
+        border: thin dashed #CCC;
+        white-space: nowrap;
+        position: relative;
+        overflow: visible;
+    }
+    [data-page="room-view"][data-editable] #room-grid .device-icon {
+        animation: wiggle 1s infinite;  
+    }
+    [data-page="room-view"][data-editable] #room-grid, 
+    [data-page="room-view"][data-editable] #room-grid td {
+        border-color: #f44336;
+        border-style: dotted;
+    }
+    [data-page="room-view"][data-editable] .device-icon {
+        /*box-shadow: 4px 2px 4px #53a8fe;*/
+    }
+
+    [data-page="room-view"][data-editable] #enable-edit {
+        display: none;
+    }
+
+    #edit-done-panel {
+        background-color: rgba(255,255,255,0.9);
+        height: auto;
+        box-shadow: -2px -2px 4px lightgray;
+    }
+    #show-saved-modes {
+        z-index: 90;
+        position: absolute;
+        left: calc(50% - 48px);
+        bottom: 0px;
+        min-width: 96px;
+        height: 48px;
+        font-weight: bold;
+        margin: 0px auto;
+        border-radius: 96px 96px 0px 0px;
+        padding: 8px 0px 0px 0px;
+        box-shadow: 2px 2px 6px gray;
+    }
+    #show-saved-modes > * {
+        font-size: 36px;
+    }
+    #saved-modes-panel {
+        height: auto;
+        box-shadow: 2px -2px 4px lightgrey;
+        background-color: rgba(255,255,255,0.9);
+    }
+    #saved-modes-panel > .picker-modal-inner {
+        line-height: 1em;
+        /*padding: 16px;*/
+    }
+    #saved-modes-panel .saved-mode-group {
+        border-right: thin solid lightgrey;
+        display: inline-block;
+        padding: 24px 16px;
+        vertical-align: top;
+        height: 48px;
+    }
+    #saved-modes-panel .saved-mode-group:empty {
+        display: none;
+    }
+    #saved-modes-panel .saved-mode-group:last-child {
+        float: right;
+        border: none;
+    }
+    #saved-modes-panel .saved-mode {
+        background: darkgray;
+        display: inline-block;
+        border-radius: 48px;
+        height: 48px;
+        width: 48px;
+        padding: 0px;
+        /*box-shadow: 2px 2px 6px gray;*/
+        font-size: 32px;
+        margin: 0px 8px;
+        text-align: center;
+    }
+    #saved-modes-panel a i {
+        color: white;
+        line-height: 48px;
+    }
+
+    #picker-lighting {
+        background-color: rgba(255,255,255,0.9);
+        box-shadow: 2px 2px 6px gray;
+        height: 280px;
+        /*-webkit-transition: height 0.8s;*/
+        /*transition: height 0.8s;*/
+    }
+    #picker-lighting[data-mode='light_wrgb'] {
+        height: 280px;
+    }
+    #picker-lighting[data-mode='lighting'] {
+        height: 145px;
+    }
+    #picker-lighting[data-mode='light_wrgb'] #color-picker {
+        height: 100px;
+    }
+    #picker-lighting[data-mode='lighting'] #color-picker {
+        display: none;
+    }
+    #color-picker {
+        overflow: hidden;
+    }
+    #color-picker img {
+        width: 100%;
+        height: 100%;
+        border: none;
+        padding: 0px;
+        margin: 0px;
+    }
+</style>
+<script>
+$app.onload(function(e) {
+    var rid = e.query.rid;
+    if (!rid) {
+        console.error('empty room id');
+        return $mainView.router.loadPage('/pages/room-list.html');
+    }
+
+    var room = $db.rooms[rid];
+    $('#room-name').innerHTML = room.name;
+    $gateway.filter(function(t, m, d) { 
+        return d.room === rid; 
+    });
+
+    // var vw = Math.floor(Math.max(100 / room.w, 100 / room.d));
+    var vw = 'calc((100vw - ' + (35 + room.w * 1) + 'px)/' + room.w + ')';
+    var cell = '<td style="font-size:X;width:X;height:X;"></td>'
+    .replace(/X/g, vw);
+    var rows = [];
+    for (var d = 0; d < room.d; ++d) {
+        var row = [];
+        for (var w = 0; w < room.w; ++w) { row.push(cell); }
+            rows.push('<tr>' + row.join('') + '</tr>');
+    }
+    $('#room-grid').innerHTML = rows.join('');
+
+});
+$app.onload(function() {
+    var img = $('#color-picker img');
+    var canvas = null;
+    var ctx = null;
+    var mac = null;
+    var data = null;
+    var waiting = false;
+    var update = function(w, r, g, b) {
+        if (waiting) { return; }
+
+        if (!mac) { mac = $('#picker-lighting').getAttribute('data-mac'); }
+        if (mac !== $('#picker-lighting').getAttribute('data-mac')) {
+            mac = $('#picker-lighting').getAttribute('data-mac');
+            data = null;
         }
 
-        [data-page="room-view"][data-editable] #edit-done-panel {
-            bottom: 0px;
+        if (!data) {
+            data = $('#picker-lighting').getAttribute('data-value')
+                .split(',').map(function(v) { return v * 1; });
         }
-        [data-page="room-view"][data-editable] #enable-edit {
-            display: none;
-        }
+        (w !== null) && (data[0] = w);
+        (r !== null) && (data[1] = r);
+        (g !== null) && (data[2] = g);
+        (b !== null) && (data[3] = b);
 
-        #edit-done-panel {
-            margin:;
-            background-color: white;
-            z-index: 100;
-            position: fixed;
-            -webkit-transition: bottom 0.8s; /* Safari */
-            transition: bottom 0.8s;
-            bottom: -100px;
-            width: 100%;
-            margin: 0px;
-            padding-top: 24px;
-            padding-bottom: 24px;
-            box-shadow: -2px -2px 4px lightgray;
-        }
-        #saved-modes {
-            z-index: 90;
-            position: absolute;
-            left: calc(50% - 48px);
-            bottom: -48px;
-            min-width: 96px;
-            height: 96px;
-            font-weight: bold;
-            margin: 0px auto;
-            border-radius: 100px;
-            padding: 8px 0px 0px 0px;
-            box-shadow: 2px 2px 6px gray;
-        }
-        #saved-modes > * {
-            font-size: 36px;
-        }
-        #saved-modes-panel {
-            height: auto;
-            box-shadow: 2px -2px 4px lightgrey;
-            /*z-index: 80;*/
-            /*position: absolute;*/
-            /*bottom: calc(0px - 100%);*/
-            /*-webkit-transition: bottom 0.8s; /* Safari */
-            /*transition: bottom 0.8s;*/
-        }
-        #saved-modes-panel > div {
-            /*padding: 16px;*/
-        }
-        #saved-modes-panel a {
-            display: inline-block;
-            border-radius: 48px;
-            height: 48px;
-            width: 48px;
-            padding: 5px;
-            /*box-shadow: 2px 2px 6px gray;*/
-            font-size: 32px;
-            margin: 8px;
-        }
-        #saved-modes-panel a i {
-            line-height: 36px;
-        }
-        #picker-lighting {
-            height: 230px;
-            box-shadow: 2px 2px 6px gray;            
-        }
-    </style>
-    <script>
-        $app.onload(function(e) {
-            var rid = e.query.rid;
-            if (!rid) {
-                console.error('empty room id');
-                return $mainView.router.loadPage('/pages/room-list.html');
-            }
+        var type = $('#picker-lighting').getAttribute('data-mode');
+        $gateway.send('light_wrgb.set_dim_level', {
+            mac: mac,
+            levelW: data[0], levelR: data[1], levelG: data[2], levelB: data[3]
+        }).then(function() { waiting = false; });
+        waiting = true;
+    };
+    $('#color-picker').addEventListener('touchend', function(e) {
+        if (e.changedTouches.length !== 1) { return; }
 
-            var room = $db.rooms[rid];
-            $('#room-name').innerHTML = room.name;
-            $gateway.filter(function(t, m, d) { 
-                return d.room === rid; 
-            });
-
-            // var vw = Math.floor(Math.max(100 / room.w, 100 / room.d));
-            var vw = 'calc((100vw - ' + (35 + room.w * 1) + 'px)/' + room.w + ')';
-            var cell = '<td style="width:X;max-width:X;height:X;max-height:X;"></td>'
-            .replace(/X/g, vw);
-            var rows = [];
-            for (var d = 0; d < room.d; ++d) {
-                var row = [];
-                for (var w = 0; w < room.w; ++w) { row.push(cell); }
-                    rows.push('<tr>' + row.join('') + '</tr>');
-            }
-            $('#room-grid').innerHTML = rows.join('');
-
+        if (!ctx) {
+            canvas = document.createElement('canvas');
+            canvas.width = img.offsetWidth;
+            canvas.height = img.offsetHeight;
+            ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, img.offsetWidth, img.offsetHeight);                    
+        }
+        var t = e.changedTouches[0];
+        var el = e.target;
+        var x = t.clientX - el.x;
+        var y = t.clientY - el.y;
+        var px = canvas.getContext('2d').getImageData(x, y, 1, 1).data;
+        update(null, Math.round(px[0] / 2.55), Math.round(px[1] / 2.55), Math.round(px[2] / 2.55));
+    });
+    $app.onload(function() {
+        $('#level-slider').addEventListener('input', function() {
+            update(this.value * 1, null, null, null);
         });
-        $app.onload(function() {
-            var editing = false;
-            var dnd = [null, null, null];
-            $('#edit-done').onclick = function() {
-                editing = false;
-                $('[data-page="room-view"]').removeAttribute('data-editable');
-                $('.picker-modal', true).forEach(function(p) {
-                    p.id = p.id.substring(1);
-                });
-            };
-            $app.touchstart(function(e) {
-                $app.closeModal();
-            });
-            $app.touchmove(function(e) {
-                var icon = dnd[0];
-                if (!icon) { return; }
+    });         
+});
+$app.onload(function() {
+    var base = 0;
+    $('#room-grid-outer').addEventListener('touchstart', function(e) {
+        if (e.touches.length !== 2) {
+            return;
+        }
+        var p1 = e.touches[0];
+        var p2 = e.touches[1];
+        var dx = p1.pageX - p2.pageX;
+        var dy = p1.pageY - p2.pageY;
+        base = Math.pow(dx * dx + dy * dy, 0.5);
+    });
+    $('#room-grid-outer').addEventListener('touchmove', function(e) {
+        if (base === 0) {
+            return;
+        }
 
-                var touch = e.touches[0];
-                var dx = touch.pageX - dnd[1];
-                var dy = touch.pageY - dnd[2];
-                icon.style.top = dy + 'px';
-                icon.style.left = dx + 'px';
-            });
-            $app.touchend(function(e) {
-                var icon = dnd[0];
-                if (!icon) { return; }
+        var p1 = e.touches[0];
+        var p2 = e.touches[1];
+        var dx = p1.pageX - p2.pageX;
+        var dy = p1.pageY - p2.pageY;
+        var curr = Math.pow(dx * dx + dy * dy, 0.5);
+        console.info(curr / base);
+    });
+});
+$app.onload(function() {
+    var editing = false;
+    var dnd = [null, null, null];
+    $app.touchmove(function(e) {
+        var icon = dnd[0];
+        if (!icon) { return; }
 
-                var touch = e.changedTouches[0];
-                var x = touch.pageX;
-                var y = touch.pageY + $('#room-grid-outer').scrollTop;
+        var touch = e.touches[0];
+        var dx = touch.pageX - dnd[1];
+        var dy = touch.pageY - dnd[2];
+        icon.style.top = dy + 'px';
+        icon.style.left = dx + 'px';
+    });
+    $app.touchend(function(e) {
+        var icon = dnd[0];
+        if (!icon) { return; }
+
+        var touch = e.changedTouches[0];
+        var x = touch.pageX;
+        var y = touch.pageY + $('#room-grid-outer').scrollTop;
+        var slot = $('#room-grid td', true).filter(function(i) {
+            return !i.innerHTML;
+        }).find(function(i) {
+            var x1 = i.offsetLeft;
+            var x2 = x1 + i.offsetWidth;
+            var y1 = i.offsetTop;
+            var y2 = y1 + i.offsetHeight;
+            return x1 <= x && x <= x2 && y1 <= y && y <= y2;
+        });
+
+        if (slot) {
+            icon.parentNode.removeChild(icon);
+            slot.appendChild(icon);
+            var row = slot.parentNode;
+            var mac = icon.getAttribute('data-mac');
+            var xv = [].indexOf.call(row.childNodes, slot) * 2;
+            var yv = [].indexOf.call(row.parentNode.childNodes, row) * 2;
+            $gateway.set('x', xv, [mac]);
+            $gateway.set('y', yv, [mac]);
+        }
+        $('#room-grid-outer').style.overflowY = 'auto';
+        icon.style.top = icon.style.left = null;
+        dnd[0] = null;
+    });
+    $gateway.watch(function(type, devices) {
+        if (editing) { return; }
+        var template = '#device-icon-' + type;
+
+        [].forEach.call(Object.keys(devices), function(mac) {
+            var dev = devices[mac];
+            var icn = $('#m_' + mac);
+            if (icn) {
+                icn.parentNode.innerHTML = $templates(template, dev);
+            }
+            else if (dev.x === undefined || dev.y === undefined) {
                 var slot = $('#room-grid td', true).filter(function(i) {
                     return !i.innerHTML;
-                }).find(function(i) {
-                    var x1 = i.offsetLeft;
-                    var x2 = x1 + i.offsetWidth;
-                    var y1 = i.offsetTop;
-                    var y2 = y1 + i.offsetHeight;
-                    return x1 <= x && x <= x2 && y1 <= y && y <= y2;
-                });
+                })[0];
+                var row = slot.parentNode;
+                var x = dev.x = [].indexOf.call(row.childNodes, slot) * 2;
+                var y = dev.y = [].indexOf.call(row.parentNode.childNodes, row) * 2;
+                slot.innerHTML = $templates(template, dev);
+            }
+            else {
+                var x = Math.round(dev.x / 2);
+                var y = Math.round(dev.y / 2);
+                var slot = $('#room-grid tr', true)[y].childNodes[x];
+                slot.innerHTML = $templates(template, dev);
+            }
+        });
+        $app.onload(function() {
+            $('.device-icon[data-new]', true).forEach(function(icon) {
+                icon.addEventListener('touchstart', function(e) {
+                    if (!editing || e.touches.length !== 1) {
+                        return;
+                    }
 
-                if (slot) {
-                    icon.parentNode.removeChild(icon);
-                    slot.appendChild(icon);
-                    var row = slot.parentNode;
+                    dnd[0] = icon;
+                    dnd[1] = e.touches[0].pageX;
+                    dnd[2] = e.touches[0].pageY;                                
+                    $('#room-grid-outer').style.overflowY = 'hidden';
+                });
+                icon.addEventListener('touchstart', function(e) {
+                    var type = icon.getAttribute('data-type');
                     var mac = icon.getAttribute('data-mac');
-                    var xv = [].indexOf.call(row.childNodes, slot) * 2;
-                    var yv = [].indexOf.call(row.parentNode.childNodes, row) * 2;
-                    $gateway.set('x', xv, [mac]);
-                    $gateway.set('y', yv, [mac]);
-                }
-                $('#room-grid-outer').style.overflowY = 'auto';
-                icon.style.top = icon.style.left = null;
-                dnd[0] = null;
-            });
-            $gateway.watch(function(type, devices) {
-                if (editing) { return; }
-                var template = '#device-icon-' + type;
-
-                [].forEach.call(Object.keys(devices), function(mac) {
-                    var dev = devices[mac];
-                    var icn = $('#m_' + mac);
-                    if (icn) {
-                        icn.parentNode.innerHTML = $templates(template, dev);
-                    }
-                    else if (dev.x === undefined || dev.y === undefined) {
-                        var slot = $('#room-grid td', true).filter(function(i) {
-                            return !i.innerHTML;
-                        })[0];
-                        var row = slot.parentNode;
-                        var x = dev.x = [].indexOf.call(row.childNodes, slot) * 2;
-                        var y = dev.y = [].indexOf.call(row.parentNode.childNodes, row) * 2;
-                        slot.innerHTML = $templates(template, dev);
-                    }
-                    else {
-                        var x = Math.round(dev.x / 2);
-                        var y = Math.round(dev.y / 2);
-                        var slot = $('#room-grid tr', true)[y].childNodes[x];
-                        slot.innerHTML = $templates(template, dev);
-                    }
+                    var value = icon.getAttribute('data-value');
+                    $('#picker-lighting').setAttribute('data-mac', mac);
+                    $('#picker-lighting').setAttribute('data-mode', type);
+                    $('#picker-lighting').setAttribute('data-value', value);
+                    $('#level-slider').value = value.split(',')[0];
                 });
-                $app.onload(function() {
-                    $('.device-icon[data-new]', true).forEach(function(icon) {
-                        icon.addEventListener('touchstart', function(e) {
-                            if (!editing) {
-                                return;
-                            }
-
-                            dnd[0] = icon;
-                            dnd[1] = e.touches[0].pageX;
-                            dnd[2] = e.touches[0].pageY;                                
-                            $('#room-grid-outer').style.overflowY = 'hidden';
-                        });
-                        icon.removeAttribute('data-new');
-                    });
-                });
-                $app.onload(function() {
-                    $('#enable-edit').onclick = function() {
-                        $('[data-page="room-view"]').setAttribute('data-editable', true);
-                        $('.picker-modal', true).forEach(function(p) {
-                            p.id = '_' + p.id;
-                        });
-                        editing = true;
-                    };
-                });
+                icon.removeAttribute('data-new');
             });
         });
+    });
+    $app.onload(function() {
+        $$('#edit-done-panel').on('picker:close', function() {
+            editing = false;
+            $('[data-page="room-view"]').removeAttribute('data-editable');                    
+        });
+        $$('#edit-done-panel').on('picker:open', function() {
+            editing = true;
+            $('[data-page="room-view"]').setAttribute('data-editable', true);
+        });
+    });
+});
 </script>
 
 <!-- var types = ['light_wrgb', 'lighting', 'ac_switch']; -->
-<script id="device-icon-light_wrgb" type="text/template7"><a class='device-icon open-picker' data-picker='#picker-lighting' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{levelW}}%,{{levelW}}%,{{levelW}}%)'><span class='center' style='background:rgb({{levelR}}%,{{levelG}}%,{{levelB}}%)'></span></a></script>
-<script id="device-icon-lighting" type="text/template7"><a class='device-icon open-picker' data-picker='#picker-lighting' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{level}}%,{{level}}%,{{level}}%)'></a></script>
+<script id="device-icon-light_wrgb" type="text/template7"><a class='device-icon open-picker' data-type='{{type}}' data-picker='#picker-lighting' data-value='{{levelW}},{{levelR}},{{levelG}},{{levelB}}' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{levelW}}%,{{levelW}}%,{{levelW}}%)'>
+<i class='fa fa-lightbulb-o' aria-hidden="true" style='color:rgb({{levelR}}%,{{levelG}}%,{{levelB}}%)'></i>
+</a></script>
+<script id="device-icon-lighting" type="text/template7"><a class='device-icon open-picker' data-type='{{type}}' data-picker='#picker-lighting' data-value='{{level}}' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{level}}%,{{level}}%,{{level}}%)'>
+<i class="fa fa-sun-o" aria-hidden="true" style='color:rgb({{level}}%,{{level}}%,{{level}}%)'></i>
+</a></script>
 
 <div class="navbar">
     <div class="navbar-inner">
-        <div class="left"><a class='link' href='#' id='go-to-list'><i class='icon f7-icons'>chevron_left</i></a></div>
+        <div class="left"><a class='link' href='pages/room-list.html'><i class='icon f7-icons'>chevron_left</i></a></div>
         <div class="center" id='room-name'></div>
-        <div class="right"><a class='link' href='#' id='enable-edit'><i class='icon f7-icons'>more_vertical</i></a></div>
+        <div class="right"><a class='link open-picker' data-picker='#edit-done-panel' href='#' id='enable-edit'><i class='icon f7-icons'>keyboard</i></a></div>
     </div>
 </div>
-
 
 <div class='page-content' style='overflow-y: auto'>
 
-    <div class='picker-modal' id='picker-lighting'>
-        <div class="picker-modal-inner">
-            <div class="content-block">
-                <div class='list-block'>
-                    <div class="item-input">
-                        <div class="range-slider">
-                            <input type="range" min="0" max="100" step="1">
-                        </div>
-                    </div>
-                </div>
+    <div id='room-grid-outer'><table id='room-grid'></table></div>
+    <a id='show-saved-modes' class='button button-fill open-picker' data-picker='#saved-modes-panel'><i class='icon f7-icons'>filter-fill</i></a>
 
-                <div class='list-block'>
-                    <a href="#" id='apply-all' class="button button-raised link" data-i18n-key='apply-all'></a>
+    <div class='picker-modal' id='picker-lighting'><div class="picker-modal-inner"><div class="content-block">
+        <div class='list-block' id='color-picker'>
+            <img src='img/rgb.png'>
+        </div>
+        <div class='list-block'>
+            <div class="item-input">
+                <div class="range-slider">
+                    <input id='level-slider' type="range" min="0" max="100" step="1">
                 </div>
-                <div class='list-block'>
-                    <a href="#" id='apply-all' class="close-picker button button-fill button-raised link" data-i18n-key='done'></a>
-                </div>
-
             </div>
         </div>
-    </div>
-
-    <!-- <div class='content-block'> -->
-    <div id='room-grid-outer'><table id='room-grid'></table></div>
-    <!-- </div> -->
-    <a id='saved-modes' class='button button-fill open-picker' data-picker='#saved-modes-panel'><i class='icon f7-icons'>filter-fill</i></a>
-    <div class='picker-modal' id='saved-modes-panel'><div class='picker-modal-inner'><div class='content-block'>
-        <a id='all-on' class='button button-fill'><i class='icon f7-icons'>data_fill</i></a>
-        <a id='all-off' class='button button-fill'><i class='icon f7-icons'>data</i></a>
+        <div class='list-block'>
+            <div class='buttons-row'>
+            <a href="#" id='lighting-apply-all' class="button button-raised link" data-i18n-key='apply-all'></a>
+            <a href="#" id='lighting-done' class="close-picker button button-fill button-raised link" data-i18n-key='done'></a>
+            </div>
+        </div>
     </div></div></div>
 
-    <div class="content-block" id='edit-done-panel'>
-        <a href="#" id='edit-done' class="button button-fill button-raised link" data-i18n-key='done'></a>
-    </div>
+    <div class='picker-modal' id='saved-modes-panel'><div class='picker-modal-inner'><!-- 
+     --><span class='saved-mode-group'><!-- 
+        --><a id='all-on' class='saved-mode'><i class='icon f7-icons'>data_fill</i></a><!-- 
+        --><a id='all-off' class='saved-mode'><i class='icon f7-icons'>data</i></a>
+        </span><!-- 
+     --><span class='saved-mode-group'></span><!-- 
+     --><span class='saved-mode-group'><!--
+         --><a id='add-mode' class='saved-mode'><i class='icon f7-icons'>add</i></a><!--         
+     --></span><!-- 
+ --></div></div>
+
+    <div class="picker-modal" id='edit-done-panel'><div class='picker-modal-inner'><div class='content-block'>
+        <a href="#" id='edit-done' class="close-picker button button-fill button-raised link" data-i18n-key='done'></a>
+    </div></div></div>
 </div>
+
 </div>

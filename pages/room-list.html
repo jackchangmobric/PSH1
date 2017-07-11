@@ -1,0 +1,24 @@
+<div data-page='room-list' class='page navbar-fixed'>
+    <script>
+        $app.onload(function(e) {
+            $('#logout').onclick = function() {
+                $db.reset();
+            };
+        });
+    </script>
+
+<script id="device-icon-light_wrgb" type="text/template7"><a class='device-icon open-picker' data-type='{{type}}' data-picker='#picker-lighting' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{levelW}}%,{{levelW}}%,{{levelW}}%)'><span class='center' style='background:rgb({{levelR}}%,{{levelG}}%,{{levelB}}%)'></span></a></script>
+<script id="device-icon-lighting" type="text/template7"><a class='device-icon open-picker' data-type='{{type}}' data-picker='#picker-lighting' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{level}}%,{{level}}%,{{level}}%)'></a></script>
+
+<div class="navbar">
+    <div class="navbar-inner">
+        <div class="left"><a class='link' href='#' id='logout'><i class='icon f7-icons'>logout</i></a></div>
+        <div class="center" id='room-name'></div>
+        <div class="right"><a class='link' href='settings.html' id='settings'><i class='icon f7-icons'>more_vertical</i></a></div>
+    </div>
+</div>
+
+<div class='page-content' style='overflow-y: auto'>
+</div>
+
+</div>

@@ -147,6 +147,11 @@ var $gateway = (function(fake) {
                     return Promise.resolve(false);
                 });
         },
+        get: function(type, mac) {
+            var list = devices[type];
+            if (!list) { return null; }
+            return list[mac];
+        },
         set: function(key, value, list, clearOther) {
             if (clearOther) {
                 [].forEach.call(Object.keys(attributes), function(mac) {
@@ -254,7 +259,8 @@ var $gateway = (function(fake) {
             delete watchers[id];
         }
     };
-})({
+})();
+({
     ac_switch: {
         "success": "true",
         "objects": [
