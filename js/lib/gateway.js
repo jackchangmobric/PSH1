@@ -160,7 +160,7 @@ var $gateway = (function(fake) {
                     }));
                 }, []);
             }
-            
+
             if (typeof(type) === 'function') {
                 var filtered = [];
                 Object.keys(devices).forEach(function(t) {
@@ -275,7 +275,7 @@ var $gateway = (function(fake) {
         }
     };
 })
-// ();
+();
 ({
     ac_switch: {
         "success": "true",
