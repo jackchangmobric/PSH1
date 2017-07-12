@@ -111,6 +111,14 @@ var $gateway = (function(fake) {
             var config = $db.user;
             if (!config) { return Promise.resolve(true); }
 
+            var url = fullUri(config, method);
+            if (options) {
+                url += '?' + [].map.call(Object.keys(options), function(k) {
+                    return k + '=' + options[k];
+                }).join('&')
+            }
+            console.info(url);
+
             if (fake) {
                 var type = method.split('.')[0];
                 var mac = options.mac;
@@ -130,14 +138,10 @@ var $gateway = (function(fake) {
                         }, 300);
                     });
                 }
+                return Promise.resolve();
             }
 
-            var url = fullUri(config, method);
-            if (options) {
-                url += '?' + [].map.call(Object.keys(options), function(k) {
-                    return k + '=' + options[k];
-                }).join('&')
-            }
+
             return $http.get(url)
                 .then(function(r) {
                     return (r.success) ? Promise.resolve(true) : Promise.resolve(false);
@@ -147,12 +151,46 @@ var $gateway = (function(fake) {
                     return Promise.resolve(false);
                 });
         },
-        get: function(type, mac) {
+        get: function(type, filter) {
+            if (!type) {
+                return Object.keys(devices).reduce(function(a, t) {
+                    var list = devices[t];
+                    return a.concat(Object.keys(list).map(function(mac) { 
+                        return list[mac]; 
+                    }));
+                }, []);
+            }
+            
+            if (typeof(type) === 'function') {
+                var filtered = [];
+                Object.keys(devices).forEach(function(t) {
+                    var list = devices[t];
+                    Object.keys(list).forEach(function(mac) {
+                        var dev = list[mac];
+                        if (type(type, mac, dev)) {
+                            filtered.push(dev);
+                        }
+                    });
+                });
+                return filtered;
+            }
+
             var list = devices[type];
             if (!list) { return null; }
-            return list[mac];
+
+            if (!filter) { return Object.keys(list).map(function(mac) { return list[mac]; }); }
+            if (typeof(filter) === 'string') { return list[filter]; }
+            return list.filter(filter);
         },
-        set: function(key, value, list, clearOther) {
+        count: function(filter) {
+            return $gateway.get(filter).length;
+        },
+        each: function(filter, cb) {
+            $gateway.get(filter).forEach(function(dev) {
+                cb(dev.type, dev.mac, dev);
+            });
+        },
+        attr: function(key, value, list, clearOther) {
             if (clearOther) {
                 [].forEach.call(Object.keys(attributes), function(mac) {
                     var kv = attributes[mac];
@@ -168,29 +206,6 @@ var $gateway = (function(fake) {
             attributes.$save();
             refresh();
         },
-        count: function(filter) {
-            var count = 0;
-            Object.keys(devices).forEach(function(type) {
-                var list = devices[type];
-                Object.keys(list).forEach(function(mac) {
-                    if (!filter || filter(type, mac, list[mac])) {
-                        count += 1;
-                    }
-                });
-            });
-            return count;
-        },
-        each: function(filter, cb) {
-            Object.keys(devices).forEach(function(type) {
-                var list = devices[type];
-                Object.keys(list).forEach(function(mac) {
-                    if (!filter || filter(type, mac, list[mac])) {
-                        cb(type, mac, list[mac]);
-                    }
-                });
-            });
-        },
-
 
         saveState: function(namespace, name, description) {
             var s = {};
@@ -259,7 +274,8 @@ var $gateway = (function(fake) {
             delete watchers[id];
         }
     };
-})();
+})
+// ();
 ({
     ac_switch: {
         "success": "true",

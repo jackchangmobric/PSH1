@@ -101,7 +101,7 @@
 
                 var rid = $('#room-id').value;
                 var devs = $('#device-list input:checked', true);
-                $gateway.set('room', rid, devs.map(function(i) { 
+                $gateway.attr('room', rid, devs.map(function(i) { 
                     return i.value; 
                 }));
                 $db.rooms.$update(function(o) {

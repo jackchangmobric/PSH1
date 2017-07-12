@@ -24,11 +24,13 @@
         background: none !important;
     }
     .device-icon .center {
-        width: 50%;
-        height: 50%;
-        margin: 25%;
+        width: 40%;
+        height: 40%;
+        margin: 30%;
         border-radius: 100%;
-        display: block;
+        display: inline-block;
+        position: absolute;
+        /*box-shadow: 2px 2px 8px gray;*/
     }
     .device-icon i.fa {
         position:absolute;
@@ -207,6 +209,17 @@ $app.onload(function() {
     var mac = null;
     var data = null;
     var waiting = false;
+    var format = function(type, mac, wrgb) {
+        switch (type) {
+            case 'light_wrgb': return ['light_wrgb.set_dim_level', {
+                mac: mac, levelW: wrgb[0], levelR: wrgb[1], levelG: wrgb[2], levelB: wrgb[3]
+            }];
+            case 'lighting': return ['lighting.set_dim_level', {
+                mac: mac, level: wrgb[0]
+            }];
+        }
+        return null;
+    };
     var update = function(w, r, g, b) {
         if (waiting) { return; }
 
@@ -225,15 +238,43 @@ $app.onload(function() {
         (g !== null) && (data[2] = g);
         (b !== null) && (data[3] = b);
 
-        var type = $('#picker-lighting').getAttribute('data-mode');
-        $gateway.send('light_wrgb.set_dim_level', {
-            mac: mac,
-            levelW: data[0], levelR: data[1], levelG: data[2], levelB: data[3]
-        }).then(function() { waiting = false; });
         waiting = true;
+        var type = $('#picker-lighting').getAttribute('data-mode');
+        var payload = format(type, mac, data);
+        return $gateway.send(payload[0], payload[1])
+            .then(function() { waiting = false; });
     };
-    $('#color-picker').addEventListener('touchend', function(e) {
-        if (e.changedTouches.length !== 1) { return; }
+
+    var apply = function(wrgb, type) {
+        var list = $gateway.get(type);
+        var idx = 0;
+        var send = function() {
+            if (idx === list.length) { 
+                $app.hideIndicator();
+                return;
+            }
+
+            var dev = list[idx++];
+            var payload = format(dev.type, dev.mac, wrgb);
+            if (!payload) {
+                return setTimeout(send, 0);
+            }
+            $gateway.send(payload[0], payload[1]).then(send);
+        };
+        setTimeout(send, 0);
+        $app.showIndicator();
+    };
+    $('.saved-mode', true).forEach(function(button) {
+        button.addEventListener('click', function() {
+            var value = button.getAttribute('data-value');
+            if (value) {
+                return apply(value.split(',').map(function(v) { return v * 1; }))
+            }
+        });
+    });
+
+    $('#color-picker').addEventListener('touchmove', function(e) {
+        if (e.touches.length !== 1) { return; }
 
         if (!ctx) {
             canvas = document.createElement('canvas');
@@ -242,18 +283,25 @@ $app.onload(function() {
             ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, img.offsetWidth, img.offsetHeight);                    
         }
-        var t = e.changedTouches[0];
+        var t = e.touches[0];
         var el = e.target;
         var x = t.clientX - el.x;
         var y = t.clientY - el.y;
         var px = canvas.getContext('2d').getImageData(x, y, 1, 1).data;
         update(null, Math.round(px[0] / 2.55), Math.round(px[1] / 2.55), Math.round(px[2] / 2.55));
     });
-    $app.onload(function() {
-        $('#level-slider').addEventListener('input', function() {
-            update(this.value * 1, null, null, null);
-        });
-    });         
+    $('#level-slider').addEventListener('input', function() {
+        update(this.value * 1, null, null, null);
+    });
+    $('#lighting-apply-all').addEventListener('click', function() {
+        if (!data) {
+            data = $('#picker-lighting').getAttribute('data-value')
+                .split(',').map(function(v) { return v * 1; });
+        }
+
+        var type = $('#picker-lighting').getAttribute('data-mode');
+        apply(data, type);
+    });
 });
 $app.onload(function() {
     var base = 0;
@@ -317,8 +365,8 @@ $app.onload(function() {
             var mac = icon.getAttribute('data-mac');
             var xv = [].indexOf.call(row.childNodes, slot) * 2;
             var yv = [].indexOf.call(row.parentNode.childNodes, row) * 2;
-            $gateway.set('x', xv, [mac]);
-            $gateway.set('y', yv, [mac]);
+            $gateway.attr('x', xv, [mac]);
+            $gateway.attr('y', yv, [mac]);
         }
         $('#room-grid-outer').style.overflowY = 'auto';
         icon.style.top = icon.style.left = null;
@@ -389,8 +437,9 @@ $app.onload(function() {
 </script>
 
 <!-- var types = ['light_wrgb', 'lighting', 'ac_switch']; -->
-<script id="device-icon-light_wrgb" type="text/template7"><a class='device-icon open-picker' data-type='{{type}}' data-picker='#picker-lighting' data-value='{{levelW}},{{levelR}},{{levelG}},{{levelB}}' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{levelW}}%,{{levelW}}%,{{levelW}}%)'>
-<i class='fa fa-lightbulb-o' aria-hidden="true" style='color:rgb({{levelR}}%,{{levelG}}%,{{levelB}}%)'></i>
+<script id="device-icon-light_wrgb" type="text/template7"><a class='device-icon open-picker' data-type='{{type}}' data-picker='#picker-lighting' data-value='{{levelW}},{{levelR}},{{levelG}},{{levelB}}' data-mac='{{mac}}' id='m_{{mac}}' data-new>
+<i class='fa fa-sun-o' aria-hidden="true" style='color:rgb({{levelW}}%,{{levelW}}%,{{levelW}}%)'></i>
+<span class='center' style='background:rgb({{levelR}}%,{{levelG}}%,{{levelB}}%)'></span>
 </a></script>
 <script id="device-icon-lighting" type="text/template7"><a class='device-icon open-picker' data-type='{{type}}' data-picker='#picker-lighting' data-value='{{level}}' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{level}}%,{{level}}%,{{level}}%)'>
 <i class="fa fa-sun-o" aria-hidden="true" style='color:rgb({{level}}%,{{level}}%,{{level}}%)'></i>
@@ -430,8 +479,8 @@ $app.onload(function() {
 
     <div class='picker-modal' id='saved-modes-panel'><div class='picker-modal-inner'><!-- 
      --><span class='saved-mode-group'><!-- 
-        --><a id='all-on' class='saved-mode'><i class='icon f7-icons'>data_fill</i></a><!-- 
-        --><a id='all-off' class='saved-mode'><i class='icon f7-icons'>data</i></a>
+        --><a id='all-on' class='saved-mode' data-value='100,100,100,100'><i class='icon f7-icons'>data_fill</i></a><!-- 
+        --><a id='all-off' class='saved-mode' data-value='0,0,0,0'><i class='icon f7-icons'>data</i></a>
         </span><!-- 
      --><span class='saved-mode-group'></span><!-- 
      --><span class='saved-mode-group'><!--
