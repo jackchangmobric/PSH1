@@ -23,8 +23,8 @@ var $strings = function(json) {
     $app.onPageBeforeAnimation('*', function(e) {
         localize(e.name);
     });
-        $app.init();
-        return;
+//        $app.init();
+//        return;
     window.plugins.html5Video.initialize({
         'boot-video': 'img/boot2.m4v'
     });
