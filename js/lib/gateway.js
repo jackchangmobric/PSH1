@@ -275,7 +275,7 @@ var $gateway = (function(fake) {
         }
     };
 })
-();
+//();
 ({
     ac_switch: {
         "success": "true",

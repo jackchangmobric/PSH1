@@ -15,8 +15,8 @@ $app.onPageChange = function(page, cb) {
 };
 
 $app.onPageChange('*', function(e) {
-    $app.onload = function(cb) {
-        setTimeout(function() { cb(e); }, 0);
+    $app.onload = function(cb, d) {
+        setTimeout(function() { cb(e); }, d || 0);
     };
     $(e.container, 'script', true).forEach(function(scr) {
         var type = scr.type || 'text/javascript';
