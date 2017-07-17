@@ -299,7 +299,7 @@ $app.onload(function() {
             }
         });
         $app.onload(function() {
-            $('.device-icon.open-picker[data-new]', true).forEach(function(icon) {
+            $('.device-icon[data-new]', true).forEach(function(icon) {
                 icon.addEventListener('touchstart', function(e) {
                     if (!editing || e.touches.length !== 1) {
                         return;
@@ -310,6 +310,10 @@ $app.onload(function() {
                     dnd[2] = e.touches[0].pageY;                                
                     $('#room-grid-outer').style.overflowY = 'hidden';
                 });
+
+                if (!icon.classList.contains('open-picker')) {
+                    return;
+                }
                 icon.addEventListener('touchstart', function(e) {
                     var type = icon.getAttribute('data-type');
                     var mac = icon.getAttribute('data-mac');
@@ -450,6 +454,10 @@ $app.onload(function() {
 
             $('.device-icon[data-type="ac_switch"]', true).forEach(function(icon) {
                 icon.addEventListener('touchend', function() {
+                    if ($('[data-page="room-view"]').hasAttribute('data-editable')) {
+                        return;
+                    }
+                    
                     var val = icon.getAttribute('data-value');
                     var mac = icon.getAttribute('data-mac');
                     var payload = format(type, mac, [(val == 0) ? '1' : '0']);
