@@ -3,12 +3,43 @@
         $app.onload(function(e) {
             $('#logout').onclick = function() {
                 $db.reset();
+                setTimeout(function() {                    
+                    location.reload();
+                }, 300);
             };
+        });
+        $app.onload(function() {
+            var entries = [];
+            Object.keys($db.rooms).forEach(function(rid) {
+                var room = $db.rooms[rid];
+                var info = {
+                    rid: rid,
+                    name: room.name,
+                    w: room.w,
+                    d: room.d,
+                    icon: room.icon,
+                    description: room.description,
+                    scene: ''
+                };
+                entries.push($templates('#room-item', info));
+            });
+            $('#room-list-inner').innerHTML = entries.join('');
         });
     </script>
 
-<script id="device-icon-light_wrgb" type="text/template7"><a class='device-icon open-picker' data-type='{{type}}' data-picker='#picker-lighting' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{levelW}}%,{{levelW}}%,{{levelW}}%)'><span class='center' style='background:rgb({{levelR}}%,{{levelG}}%,{{levelB}}%)'></span></a></script>
-<script id="device-icon-lighting" type="text/template7"><a class='device-icon open-picker' data-type='{{type}}' data-picker='#picker-lighting' data-mac='{{mac}}' id='m_{{mac}}' data-new style='background:rgb({{level}}%,{{level}}%,{{level}}%)'></a></script>
+    <script id="room-item" type="text/template7"><li>
+    <a href="pages/room-view.html?rid={{rid}}" class="item-link item-content">
+        <div class="item-media"><img style='width:48px' src="img/room-icons/{{icon}}" width="80"></div>
+        <div class="item-inner">
+            <div class="item-title-row">
+                <div class="item-title">{{name}}</div>
+                <div class="item-after">{{w}} x {{d}}</div>
+            </div>
+            <div class="item-subtitle">{{scene}}</div>
+            <div class="item-text">{{description}}</div>
+        </div>
+    </a>
+    </li></script>
 
 <div class="navbar">
     <div class="navbar-inner">
@@ -19,6 +50,7 @@
 </div>
 
 <div class='page-content' style='overflow-y: auto'>
+    <div class="list-block media-list"><ul id='room-list-inner'></ul></div>
 </div>
 
 </div>

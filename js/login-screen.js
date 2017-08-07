@@ -28,7 +28,7 @@ $app.onPageInit('login', function (page) {
             $mainView.router.loadPage('pages/room-list.html');  
         }
         else {
-            $mainView.router.loadPage('pages/new-room.html?rid=foobar');            
+            $mainView.router.loadPage('pages/new-room.html');            
         }
     }
     else {

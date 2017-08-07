@@ -1,5 +1,5 @@
 var $gateway = (function(fake) {
-    var types = ['light_wrgb', 'lighting', 'ac_switch'];
+    var types = ['light_wrgb', 'lighting', 'ac_switch', 'light_wy'];
     var devices = {};
     var filter = null;
     var updating = [];
@@ -155,9 +155,13 @@ var $gateway = (function(fake) {
             if (!type) {
                 return Object.keys(devices).reduce(function(a, t) {
                     var list = devices[t];
-                    return a.concat(Object.keys(list).map(function(mac) { 
-                        return list[mac]; 
-                    }));
+                    return a.concat(Object.keys(list)
+                        .map(function(mac) { 
+                            return list[mac];
+                        })
+                        .filter(function(dev) {
+                            return (filter) ? filter(t, dev.mac, dev) : true;
+                        }));
                 }, []);
             }
 
@@ -178,9 +182,15 @@ var $gateway = (function(fake) {
             var list = devices[type];
             if (!list) { return null; }
 
-            if (!filter) { return Object.keys(list).map(function(mac) { return list[mac]; }); }
+            if (!filter) { 
+                return Object.keys(list).map(function(mac) { return list[mac]; }); 
+            }
+
             if (typeof(filter) === 'string') { return list[filter]; }
-            return list.filter(filter);
+            return list.filter(function(dev) {
+                console.info(dev.mac);
+                return filter(type, dev.mac, dev);
+            });
         },
         count: function(filter) {
             return $gateway.get(filter).length;
@@ -275,7 +285,7 @@ var $gateway = (function(fake) {
         }
     };
 })
-();
+// ();
 ({
     ac_switch: {
         "success": "true",
@@ -305,6 +315,13 @@ var $gateway = (function(fake) {
             { "dev": "4612", "mac": "7a624e1608004612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
             { "dev": "4613", "mac": "7a624e1608004613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
             { "dev": "4617", "mac": "7a624e1608004617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
+            null
+        ]
+    },
+    light_wy: {
+        "success": "true",
+        "objects": [
+            { "dev": "2012", "mac": "7a624e1608002012", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelY": "0", "": null },
             null
         ]
     },

@@ -159,12 +159,14 @@
     #picker-lighting[data-mode='lighting'] {
         height: 145px;
     }
+
     #picker-lighting[data-mode='light_wrgb'] #color-picker {
         height: 100px;
     }
     #picker-lighting[data-mode='lighting'] #color-picker {
         display: none;
     }
+    
     #color-picker {
         overflow: hidden;
     }
@@ -181,8 +183,10 @@ $app.onload(function(e) {
     var rid = e.query.rid;
     if (!rid) {
         console.error('empty room id');
-        return $mainView.router.loadPage('/pages/room-list.html');
+        return $mainView.router.loadPage('pages/room-list.html');
     }
+
+    $('#open-room-setting').href += ('?rid=' + rid);
 
     var room = $db.rooms[rid];
     $('#room-name').innerHTML = room.name;
@@ -338,7 +342,8 @@ $app.onload(function() {
         });
     });
 });
-$app.onload(function() {
+$app.onload(function(e) {
+    var rid = e.query.rid;
     var img = $('#color-picker img');
     var canvas = null;
     var ctx = null;
@@ -385,7 +390,10 @@ $app.onload(function() {
     };
 
     var apply = function(wrgb, type) {
-        var list = $gateway.get(type);
+        var list = $gateway.get(type, function(t, m, d) { 
+            return d.room === rid; 
+        });
+        console.info(list);
         var idx = 0;
         var send = function() {
             if (idx === list.length) { 
@@ -485,7 +493,10 @@ $app.onload(function() {
     <div class="navbar-inner">
         <div class="left"><a class='link' href='pages/room-list.html'><i class='icon f7-icons'>chevron_left</i></a></div>
         <div class="center" id='room-name'></div>
-        <div class="right"><a class='link open-picker' data-picker='#edit-done-panel' href='#' id='enable-edit'><i class='icon f7-icons'>keyboard</i></a></div>
+        <div class="right">
+            <a class='link' href='pages/new-room.html' id='open-room-setting'><i class='icon f7-icons'>gear</i></a>
+            <a class='link open-picker' data-picker='#edit-done-panel' href='#' id='enable-edit'><i class='icon f7-icons'>keyboard</i></a>
+        </div>
     </div>
 </div>
 

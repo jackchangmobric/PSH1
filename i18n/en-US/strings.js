@@ -15,6 +15,8 @@ $strings({
         'dimension': 'Dimension', 
             'dimensionW': 'Width (ft.)',
             'dimensionD': 'Depth (ft.)',
+        'description': 'Description',
+            'empty-description': 'Something about this room',
 
         'room-icon': 'Display Icon',
 
@@ -22,7 +24,7 @@ $strings({
         'select-all': 'Select all',
         'unselect-all': 'Unselect all',
         'cancel': 'Abort',
-        'done': 'Save'
+        'done': 'Done'
     },
     'room-view':  {
         'edit': 'Edit',
