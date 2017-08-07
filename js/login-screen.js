@@ -45,9 +45,9 @@ $app.onPageInit('login', function (page) {
                 });
         };
     }
-    $('#boot-video').style.opacity = 0;
+    $('#splash-image').style.opacity = 0;
     setTimeout(function() {
         $('#app-space').style.opacity = 1;        
-        $('#boot-video').parentNode.removeChild($('#boot-video'));
+        $('#splash-image').parentNode.removeChild($('#splash-image'));
     }, 1000);
 });

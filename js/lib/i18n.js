@@ -23,14 +23,17 @@ var $strings = function(json) {
     $app.onPageBeforeAnimation('*', function(e) {
         localize(e.name);
     });
+
+    setTimeout(function() {
         $app.init();
+    }, 3000);
         return;
-    window.plugins.html5Video.initialize({
-        'boot-video': 'img/boot2.m4v'
-    });
-    window.plugins.html5Video.play('boot-video', function(e) {
-        $app.init();
-    });
+    // window.plugins.html5Video.initialize({
+    //     'boot-video': 'img/boot2.m4v'
+    // });
+    // window.plugins.html5Video.play('boot-video', function(e) {
+    //     $app.init();
+    // });
 
 // console.info()
 // window.plugins.videoPlayer.play("file:///path/to/my/video.mp4");
