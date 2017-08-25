@@ -1,0 +1,102 @@
+<div data-page='new-gateway' class='page no-navbar no-toolbar'>
+    <style>
+    input[data-empty] {
+        background: #ffb0b0 !important;
+    }
+    </style>
+    <script>
+$app.onload(function(e) {
+    var mac = e.query.mac;
+    if (!mac) {
+        return;
+    }
+
+    var info = $db.gateways[mac];
+    if (!info) {
+        return;
+    }
+
+    $(e.container, '#name').value = info.name;
+    $(e.container, '#mac').value = info.mac;
+    $(e.container, '#mac').readOnly = true;
+});
+
+$app.onload(function(e) {
+    if (Object.keys($db.gateways).length === 0) {
+        $('#cancel').style.display = 'none';
+    }
+
+    $('#done').onclick = function() {
+        var empty = $(e.container, 'input', true).reduce(function(p, c) {
+            if (c.value) { 
+                c.removeAttribute('data-empty');
+                return p; 
+            }
+            else {
+                c.setAttribute('data-empty', true);
+                return p + 1;
+            }
+        }, 0);
+        if (empty) {
+            return;
+        }
+
+        var name = $(e.container, '#name').value;
+        var mac = $(e.container, '#mac').value;
+        $db.gateways.$update(function(db) {
+            db[mac] = {
+                name: name,
+                mac: mac
+            };
+        }).$save().then(function() {
+            $app.startup();
+        });
+    };
+});
+
+    </script>
+
+    <div class="navbar">
+        <div class="navbar-inner">
+            <div class='left'></div>
+            <div class="center" data-i18n-key='page-title'></div>
+            <div class='right'></div>
+        </div>
+    </div>
+    <div class='page-content'>
+        <div class='strings'>
+        </div>
+
+        <div class="content-block-title" data-i18n-key='basic-information'></div>
+        <div class='list-block' id='basic-information'><form>
+            <ul>
+                <li><div class='item-content'>
+                    <div class='item-media'><i class='icon f7-icons'>info</i></div>
+                    <div class='item-inner'>
+                        <div class='item-title label' data-i18n-key='name'></div>
+                        <div class='item-input'>
+                            <input type='text' id='name' data-i18n-key='empty-name:placeholder'>
+                        </div>
+                    </div>
+                </div></li>
+                <li><div class='item-content'>
+                    <div class='item-media'><i class='icon f7-icons'>radio</i></div>
+                    <div class='item-inner'>
+                        <div class='item-title label' data-i18n-key='mac'></div>
+                        <div class='item-input'>
+                            <input type='text' id='mac' data-i18n-key='empty-mac:placeholder'>
+                        </div>
+                    </div>
+                </div></li>
+            </ul>
+        </form></div>
+        <div class='content-block'>
+            <p class="buttons-row">
+                <a href="#" id='cancel' class="button button-raised link back" data-i18n-key='cancel'></a>
+            </p>
+            <p class="buttons-row">
+                <a href="#" id='done' class="button button-fill button-raised link" data-i18n-key='done'></a>
+            </p>
+        </div>
+    </div>
+</div>

@@ -1,53 +1,41 @@
 $app.onPageInit('login', function (page) {
-    var user = {
-        email: 'demo@localhost',
-        name: 'John Doe',
-        phone: '123-456-7890'
-    };
     var login = function(username, password) {
-        return new Promise(function(ok, ng) {
-            if (username === 'demo@localhost' && password === 'demo') {
-                return setTimeout(function() { ok(user); }, 1000);
-            }
-            if (username === '' && password === '') {
-                return setTimeout(function() { ok(user); }, 1000);
-            }
-            setTimeout(ng, 1000);
-        });
+        return $cloud.login({email:username, password: password})
+            .then(function(r) {
+                if (r.status === 200) {
+                    return r.data;
+                }
+                return Promise.reject(r);
+            });
     };
+
+    $('#sign-in').onclick = function() {
+        var username = $('#username').value;
+        var password = $('#password').value;
+        login(username, password)
+            .then(function(user) {
+                $db.user.$copy(user).$save().then(function() {
+                    location.reload();
+                });
+            })
+            .catch(function(e) {
+                $app.alert($('#error-' + e.status).innerHTML);
+            });
+    };
+
+    var splash = $('#splash-image');
+    if (!splash) { return; }
 
     var email = $db.user.email;
     if (email) {
-        var rooms = Object.keys($db.rooms);
-        if (rooms.length === 1) {
-            console.info('goto ' + rooms[0]);
-            $mainView.router.loadPage('pages/room-view.html?rid=' + rooms[0]); 
-        }
-        else if (rooms.length) {
-            console.info('goto room list');
-            $mainView.router.loadPage('pages/room-list.html');  
-        }
-        else {
-            $mainView.router.loadPage('pages/new-room.html');            
-        }
+        $db.sync().then(function() {
+            $app.startup();
+        });
     }
-    else {
-        $('#sign-in').onclick = function() {
-            var username = $('#username').value;
-            var password = $('#password').value;
-            login(username, password)
-                .then(function(user) {
-                    $db.user.$copy(user).$save();
-                    $mainView.router.loadPage('pages/new-room.html');
-                })
-                .catch(function() {
 
-                });
-        };
-    }
-    $('#splash-image').style.opacity = 0;
+    splash.style.opacity = 0;
     setTimeout(function() {
         $('#app-space').style.opacity = 1;        
-        $('#splash-image').parentNode.removeChild($('#splash-image'));
+        splash.parentNode.removeChild(splash);
     }, 1000);
 });

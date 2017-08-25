@@ -1,3 +1,4 @@
+var $container = null;
 var $ = function(parent, sel, all) {
     if (typeof(parent) === 'string') {
         var els = document.querySelectorAll(parent);

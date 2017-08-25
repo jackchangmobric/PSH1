@@ -48,7 +48,7 @@ var $http = (function() {
                         ok(JSON.parse(xhttp.responseText));
                     }
                 };
-                xhttp.open("GET", uri, true);
+                xhttp.open("PUT", uri, true);
                 xhttp.send(data);        
             });
         }

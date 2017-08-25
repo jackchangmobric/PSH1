@@ -1,0 +1,112 @@
+<div data-page='device-list' class='page navbar-fixed'>
+    <style>
+        .gateway-item .name {
+            display: inline-block;
+        }
+        .gateway-item .mac {
+            color: gray;
+        }
+        .device-item .mac {
+            color: gray;
+        }
+        .accessory {
+            float: right;
+            color: #88F;
+        }
+    </style>
+    <script>
+        $app.onload(function() {
+            console.info('reload rooms');
+        });
+        $app.onload(function() {
+            var entries = [];
+            Object.keys($db.gateways).forEach(function(mac) {
+                var gateway = $db.gateways[mac];
+                var info = {
+                    name: gateway.name,
+                    mac: gateway.mac
+                };
+                entries.push($templates('#gateway-item', info));
+            });
+            $('#gateway-list-inner').innerHTML = entries.join('');
+            $app.onload(function() {
+                $('#gateway-list-inner .gateway-item item-content', true).forEach(function(i) {
+                    var mac = $(i, '.mac').innerHTML;
+                    i.onclick = function() {
+                        $mainView.router.loadPage('pages/new-gateway.html?mac=' + mac);
+                    };
+                });
+            });
+        });
+        $app.onload(function() {
+            var reload = function() {
+                var entries = [];
+                Object.keys($db.devices).forEach(function(mac) {
+                    var dev = $db.devices[mac];
+                    var info = {
+                        mac: mac,
+                        name: dev.name
+                    };
+                    entries.push($templates('#device-item', info));
+                });
+                $('#device-list-inner').innerHTML = entries.join('');
+                $app.onload(function() {
+                    $('#device-list-inner .device-item item-content', true).forEach(function(i) {
+                        var mac = $(i, '.mac').innerHTML;
+                        i.onclick = function() {
+                            $mainView.router.loadPage('pages/new-device.html?mac=' + mac);
+                        };
+                    });
+                });
+            };
+            $('#import-from-gateway').onclick = function() {
+                $db.devices.$update(function(tbl) {
+                    $gateway.each(function(type, mac, dev) {
+                        if (tbl[mac]) { return; }
+                        tbl[mac] = {type:type,name:'',room:'',x:0,y:0};
+                    });
+                }).$save().then(reload);
+            };
+            reload();
+        });
+    </script>
+
+    <script id="gateway-item" type="text/template7"><li class="gateway-item swipeout">
+        <div class="swipeout-content item-content">
+            <div class="item-media"><i class='icon f7-icons'>radio</i></div>
+            <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span></div>
+        </div>
+        <div class="swipeout-actions-right">
+            <a href="#" class="swipeout-delete" data-i18n-key='delete'></a>
+        </div>
+    </li></script>
+
+    <script id="device-item" type="text/template7"><li class="device-item swipeout">
+        <div class="swipeout-content item-content">
+            <div class="item-media"><i class='icon f7-icons'>social_instagram</i></div>
+            <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span></div>
+        </div>
+        <div class="swipeout-actions-right">
+            <a href="#" class="swipeout-delete" data-i18n-key='delete'></a>
+        </div>
+    </li></script>
+
+<div class="navbar">
+    <div class="navbar-inner">
+        <div class="left"><a class='link' href='pages/room-list.html'><i class='icon f7-icons'>chevron_left</i></a></div>
+        <div class="center" id='title' data-i18n-key='page-title'></div>
+        <div class="right"><a class='link' href='#' id='add-new-device'><i class='icon f7-icons'>add_round</i></a></div>
+    </div>
+</div>
+
+<div class='page-content' style='overflow-y: auto'>
+    <div class="content-block-title" data-i18n-key='gateways'></div>
+    <div class="list-block"><ul id='gateway-list-inner'></ul></div>
+    <div class="content-block-title">
+        <span data-i18n-key='devices'></span>
+        <span class='accessory' id='import-from-gateway' data-i18n-key='import-from-gateway'></span>
+    </div>
+    <div class="list-block"><ul id='device-list-inner'></ul></div>
+</div>
+
+</div>

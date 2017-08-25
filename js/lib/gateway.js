@@ -1,35 +1,23 @@
 var $gateway = (function(fake) {
-    var types = ['light_wrgb', 'lighting', 'ac_switch', 'light_wy'];
-    var devices = {};
+    var types = ['light_wrgb', 'ac_switch', 'light_wy'];
+
     var filter = null;
     var updating = [];
     var watchers = {};
     var updated = [];
-    var wid = new Date().getTime();
-
-    var fullUri = function(config, method) {
-        var srv = config.gateway || '10.10.1.1:8080';
-        var url = '/' + method;
-        url = 'http://' + srv + url;
-        return url;
-    };
+    var wid = Date.now();
 
     var refresh = function() {
-        var df = [].reduce.call(Object.keys(devices), function(dfo, t) {
-            var l = devices[t];
-            var lf = [].reduce.call(Object.keys(l), function(p, m) {
-                var d = l[m];
-                if ((!filter) || (filter(t, m, d))) {
-                    p[m] = d;
-                }
-                return p;
-            }, {});
-            dfo[t] = lf;
-            return dfo;
+        var df = Object.keys(deviceStatus).reduce(function(p, mac) {
+            var dev = deviceStatus[mac];
+            if ((!filter) || filter(dev.type, dev.mac, dev)) {
+                ((p[dev.type]) || (p[dev.type] = {}))[dev.mac] = dev;
+            }
+            return p;
         }, {});
 
-        Object.keys(watchers).forEach(function(wid) {
-            var a = watchers[wid];
+        Object.keys(watchers).forEach(function(_wid) {
+            var a = watchers[_wid];
             var t = a[0];
             var cb = a[1];
             if (t) {
@@ -44,177 +32,246 @@ var $gateway = (function(fake) {
 
         setTimeout(function() {
             updated.map(function(cb) { return cb; }).forEach(function(cb, idx) { 
-                try { cb(devices); } 
+                try { cb(df); } 
                 catch (exp) { console.info(exp); }
             }); 
         }, 0);
     };
 
-    var waiting = false;
-    var timer = setInterval(function() {  
-        var config = $db.user;
-        if (!config) { return; }
-        if (waiting) { return; }
-
-        var o = {};
-        Promise.all(types.map(function(type) {
-            var url = fullUri(config, type + '.get_dev_list');
-            var update = function(r) {
-                if (!r.objects) {
-                    return;
-                }
-
-                r.objects.forEach(function(dev) {
-                    if (!dev) { return; }
-
-                    var l = (o[type]) || (o[type] = {});
-                    var a = attributes[dev.mac];
-                    (a) && ([].forEach.call(Object.keys(a), function(k) {
-                        dev[k] = a[k];
-                    }));
-                    dev.type = type;
-                    l[dev.mac] = dev;
-                });
-            };
-
-            if (fake && fake[type]) {
-                update(fake[type]);
-                return Promise.resolve();
-            }
-
-            return $http.get(url)
-                .then(update)
-                .catch(function(e) {
-                    console.error(e);
-                    return Promise.resolve();
-                });
-        }))
-        .then(function() { updating.forEach(function(cb) { cb(); }); })
-        .then(function() { devices = o; })
-        .then(refresh)
-        .then(function() { waiting = false; });
-        waiting = true;
-    }, 1000);
-
     $app.onPageChange('*', function() {
-        watchers = [].reduce.call(Object.keys(watchers), function(p, wid) {
-            var w = watchers[wid];
-            if (w[2]) { p[wid] = w; }
+        watchers = [].reduce.call(Object.keys(watchers), function(p, _wid) {
+            var w = watchers[_wid];
+            if (w[2]) { p[_wid] = w; } // persistence
             return p;
         }, {});
     });
 
-    var attributes = $db.deviceAttributes;
-    var savedStates = $db.savedStates;
-    return {
-        send: function(method, options) {
-            var config = $db.user;
-            if (!config) { return Promise.resolve(true); }
+    var gatewayStatus = (function() {
+        var r = {};
+        setInterval(function() {
+            var list = Object.keys($db.gateways);
+            if (list.length === 0) { return; }
 
-            var url = fullUri(config, method);
-            if (options) {
-                url += '?' + [].map.call(Object.keys(options), function(k) {
-                    return k + '=' + options[k];
-                }).join('&')
-            }
-            console.info(url);
+            list.forEach(function(mac) {
+                if (r[mac] !== undefined) { return; }
+                r[mac] = { status: 0, inf: null };
+            });
+            Object.keys(r).forEach(function(mac) {
+                if (list.indexOf(mac) === -1) { delete r[mac]; }
+            });
+        }, 1000);
+        return r;
+    })();
 
-            if (fake) {
-                var type = method.split('.')[0];
-                var mac = options.mac;
-                var list = (fake[type]) ? (fake[type].objects) : null;
-                if (list && mac) {
-                    return new Promise(function(ok) {
-                        setTimeout(function() {
-                            list.forEach(function(dev) {
-                                if (!dev) { return; }
-                                if (dev.mac !== mac) { return; }
-                                [].forEach.call(Object.keys(options), function(k) {
-                                    if (k === 'mac') { return; }
-                                    dev[k] = options[k];
+    var deviceStatus = (function() {
+        var r = {};
+        var protocols = [
+            (function() {
+                var cl = function() {};
+                cl.prototype = {};
+                cl.prototype.init = function(mac, ip) {
+                    this.mac = mac;
+                    this.ip = ip;
+                    console.info('use http 8080 for ' + ip);
+                    return Promise.resolve(this);
+                };
+                cl.prototype.update = function() {
+                    var mac = this.mac;
+                    var ip = this.ip
+                    return Promise.all(types.map(function(type) {
+                        var url = 'http://' + ip + ':8080/' + type + '.get_dev_list';
+                        return new Promise(function(ok, ng) {
+                            $http.get(url).then(function(resp) {
+                                if (resp.success !== 'true') { return; }
+
+                                resp.objects.forEach(function(dev) {
+                                    if (!dev) { return; }
+                                    dev.gateway = mac;
+                                    dev.type = type;
+                                    r[dev.mac] = dev;
                                 });
                             });
-                            ok(true);
-                        }, 300);
-                    });
-                }
-                return Promise.resolve();
+                            ok();
+                        });
+                    }));
+                };
+                cl.prototype.set = function(mac, options) {
+                    var dev = deviceStatus[mac];
+                    if (!dev || !dev.type) { return Promise.reject('device not found'); }
+
+                    var method = null;
+                    switch (dev.type) {
+                        case 'light_wrgb': method = 'light_wrgb.set_dim_level'; break;
+                        case 'light_wy':   method = 'light_wy.set_dim_level'; break;
+                        case 'ac_switch':  method = 'ac_switch.set_dev_status'; break;
+                    }
+                    if (!method) {
+                        return Promise.reject('device type ' + dev.type + ' not supported');
+                    }
+
+                    var ip = this.ip
+                    var url = 'http://' + ip + ':8080/' + method;
+                    return $http.get(url, options);
+                };
+
+                return function() { return new cl(); };
+            })(),
+        ];
+        var negotiate = function(mac, info) {
+            $cloud.query(mac).then(function(r) {
+                var ips = r.data.ip;
+                if (!ips || ips.length === 0) { return Promise.reject(); }
+
+                var i0 = 0;
+                var nextIP = function() {
+                    if (i0 === ips.length) { return info.status = 0; }
+
+                    var ip = ips[i0++];
+                    console.info('check ip ' + ip);
+                    var i1 = 0;
+                    var talk = function() {
+                        if (i1 === protocols.length) { return nextIP(); }
+                        protocols[i1++]().init(mac, ip)
+                            .then(function(inst) {
+                                info.inf = inst;
+                                info.status = 1;
+                            })
+                            .catch(talk);
+                    };
+                    talk();
+                };
+                nextIP();
+            })
+            .catch(function() {
+                info.status = 0;
+            });
+        };
+
+        setInterval(function initialize() {
+            Object.keys(gatewayStatus).forEach(function(mac) {
+                var info = gatewayStatus[mac];
+                if (info.status !== 0) { return; }
+                negotiate(mac, info);
+                info.status = 2; // checking...
+            });
+        }, 1000);        
+
+        var waiting = false;
+        setInterval(function updateAll() {
+            if (waiting) { return; }
+
+            var macs = Object.keys(gatewayStatus).filter(function(mac) { return gatewayStatus[mac].status === 1});
+            if (macs.length === 0) {
+                return;
             }
-
-
-            return $http.get(url)
-                .then(function(r) {
-                    return (r.success) ? Promise.resolve(true) : Promise.resolve(false);
-                })
-                .catch(function(e) {
-                    console.error(e);
-                    return Promise.resolve(false);
+            Promise.all(macs.map(function(mac) {
+                var info = gatewayStatus[mac];
+                return info.inf.update().catch(function() {
+                    info.inf = null;
+                    info.status = 0;
+                    return Promise.resolve();
                 });
+            }))
+            .then(function() { updating.forEach(function(cb) { cb(); }); })
+            .then(refresh)
+            .then(function() { waiting = false; });
+
+            waiting = true;
+        }, 1000);
+        return r;
+    })();
+
+    var savedStates = $db.savedStates;
+
+
+    return {
+        online: function(mac) {
+            return (gatewayStatus[mac] === undefined) ? 0 : gatewayStatus[mac];
+        },
+        dump: function() {
+            console.info(deviceStatus);
         },
         get: function(type, filter) {
-            if (!type) {
-                return Object.keys(devices).reduce(function(a, t) {
-                    var list = devices[t];
-                    return a.concat(Object.keys(list)
-                        .map(function(mac) { 
-                            return list[mac];
-                        })
-                        .filter(function(dev) {
-                            return (filter) ? filter(t, dev.mac, dev) : true;
-                        }));
-                }, []);
+            if (typeof(filter) === 'string') { 
+                var dev = deviceStatus[filter];
+                if (!dev || dev.type !== type) {
+                    return null;
+                }
+                return dev;
             }
 
-            if (typeof(type) === 'function') {
-                var filtered = [];
-                Object.keys(devices).forEach(function(t) {
-                    var list = devices[t];
-                    Object.keys(list).forEach(function(mac) {
-                        var dev = list[mac];
-                        if (type(type, mac, dev)) {
-                            filtered.push(dev);
-                        }
-                    });
+            if (typeof(type) === 'function') { 
+                filter = type; 
+                type = null; 
+            }
+            return Object.keys(deviceStatus)
+                .map(function(mac) { 
+                    return deviceStatus[mac];
+                })
+                .filter(function(dev) {
+                    if (type && (dev.type !== type)) { return false; }
+                    if (!filter) { return true; }
+                    return filter(dev.type, dev.mac, dev);
                 });
-                return filtered;
-            }
-
-            var list = devices[type];
-            if (!list) { return null; }
-
-            if (!filter) { 
-                return Object.keys(list).map(function(mac) { return list[mac]; }); 
-            }
-
-            if (typeof(filter) === 'string') { return list[filter]; }
-            return list.filter(function(dev) {
-                console.info(dev.mac);
-                return filter(type, dev.mac, dev);
-            });
         },
         count: function(filter) {
             return $gateway.get(filter).length;
         },
         each: function(filter, cb) {
+            if (!cb) {
+                cb = filter;
+                filter = null;
+            }
+
             $gateway.get(filter).forEach(function(dev) {
                 cb(dev.type, dev.mac, dev);
             });
         },
-        attr: function(key, value, list, clearOther) {
-            if (clearOther) {
-                [].forEach.call(Object.keys(attributes), function(mac) {
-                    var kv = attributes[mac];
-                    if (kv[key] === value) {
-                        delete kv[key];
-                    }
-                });
-            }
-            list.forEach(function(mac) {
-                var kv = (attributes[mac]) || (attributes[mac] = {});
-                kv[key] = value;
-            });
-            attributes.$save();
+        filter: function(cb) {
+            filter = cb;
             refresh();
+        },
+        updating: function(cb, add) {
+            if (add || add === undefined) { updating.push(cb); }
+            else { var idx = updating.indexOf(cb); (idx !== -1) && (updating.splice(idx, 1)); }
+        },
+        updated: function(cb, add) {
+            if (add || add === undefined) { updated.push(cb); }
+            else { var idx = updated.indexOf(cb); (idx !== -1) && (updated.splice(idx, 1)); }
+        },
+        watch: function(type, cb, persistent) {
+            var id = wid++;
+            if (typeof(type) === 'string') {
+                watchers[id] = [type, cb, persistent];
+            }
+            else {                
+                watchers[id] = [null, type, cb];
+            }
+            return id;
+        },
+        unwatch: function(id) {
+            delete watchers[id];
+        },
+
+
+
+
+
+        set: function(mac, options) {
+            var dev = deviceStatus[mac];
+            if (!dev) {
+                return Promise.reject('device not found');
+            }
+
+            var gateway = gatewayStatus[dev.gateway];
+            if (!gateway || !gateway.inf) {
+                return Promise.reject('gateway not found');
+            }
+            console.info(options);
+
+            // console.info('update ' + mac + ' through ' + dev.gateway);
+            // console.info(options);
+            return gateway.inf.set(mac, options);
         },
 
         saveState: function(namespace, name, description) {
@@ -258,80 +315,7 @@ var $gateway = (function(fake) {
             }
             return l[name];
         },
-        filter: function(cb) {
-            filter = cb;
-            refresh();
-        },
-        updating: function(cb, add) {
-            if (add || add === undefined) { updating.push(cb); }
-            else { var idx = updating.indexOf(cb); (idx !== -1) && (updating.splice(idx, 1)); }
-        },
-        updated: function(cb, add) {
-            if (add || add === undefined) { updated.push(cb); }
-            else { var idx = updated.indexOf(cb); (idx !== -1) && (updated.splice(idx, 1)); }
-        },
-        watch: function(type, cb, persistent) {
-            var id = wid++;
-            if (typeof(type) === 'string') {
-                watchers[id] = [type, cb, persistent];
-            }
-            else {                
-                watchers[id] = [null, type, cb];
-            }
-            return id;
-        },
-        unwatch: function(id) {
-            delete watchers[id];
-        }
+
+
     };
-})
-();
-({
-    ac_switch: {
-        "success": "true",
-        "objects": [
-            { "dev": "1812", "mac": "7a624e1608001812", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "0", "": null },
-            { "dev": "1813", "mac": "7a624e1608001813", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "0", "": null },
-            { "dev": "1814", "mac": "7a624e1608001814", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
-            { "dev": "1815", "mac": "7a624e1608001815", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
-            { "dev": "1816", "mac": "7a624e1608001816", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
-            { "dev": "1817", "mac": "7a624e1608001817", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
-            { "dev": "1833", "mac": "7a624e1608001833", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "0", "": null },
-            null
-        ]
-    },
-    light_wrgb: {
-        "success": "true",
-        "objects": [
-            { "dev": "1612", "mac": "7a624e1608001612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
-            { "dev": "1613", "mac": "7a624e1608001613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
-            { "dev": "1617", "mac": "7a624e1608001617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
-            { "dev": "2612", "mac": "7a624e1608002612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
-            { "dev": "2613", "mac": "7a624e1608002613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
-            { "dev": "2617", "mac": "7a624e1608002617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
-            { "dev": "3612", "mac": "7a624e1608003612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
-            { "dev": "3613", "mac": "7a624e1608003613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
-            { "dev": "3617", "mac": "7a624e1608003617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
-            { "dev": "4612", "mac": "7a624e1608004612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
-            { "dev": "4613", "mac": "7a624e1608004613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
-            { "dev": "4617", "mac": "7a624e1608004617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
-            null
-        ]
-    },
-    light_wy: {
-        "success": "true",
-        "objects": [
-            { "dev": "2012", "mac": "7a624e1608002012", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelY": "0", "": null },
-            null
-        ]
-    },
-    lighting: {
-        "success": "true",
-        "objects": [
-            { "dev": "6613", "mac": "7a624e1608006613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "level": "100", "": null },
-            { "dev": "6617", "mac": "7a624e1608006617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "level": "80", "": null },
-            { "dev": "6612", "mac": "7a624e1608006612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "level": "12", "": null },
-            { "dev": "6613", "mac": "7a624e1608006613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "level": "100", "": null },
-        null]
-    }
-});
+})();

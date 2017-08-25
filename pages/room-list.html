@@ -1,5 +1,24 @@
 <div data-page='room-list' class='page navbar-fixed'>
     <script>
+        $app.onload(function() { setTimeout(function() {
+            var gateways = Object.keys($db.gateways);
+            if (gateways.length === 0) {
+                console.info('new-gateway');
+                return $mainView.router.loadPage('pages/new-gateway.html');
+            }
+
+            var rooms = Object.keys($db.rooms);
+            if (rooms.length === 0) {
+                console.info('new-room');
+                return $mainView.router.loadPage('pages/new-room.html');
+            }
+
+            var devices = Object.keys($db.devices);
+            if (rooms.length === 1 && devices.length === 0) {
+                console.info('room-view');
+                // return $mainView.router.loadPage('pages/room-view.html?rid=' + rooms[0]); 
+            }
+        }, 1000); });
         $app.onload(function(e) {
             $('#logout').onclick = function() {
                 $db.reset();
@@ -44,8 +63,11 @@
 <div class="navbar">
     <div class="navbar-inner">
         <div class="left"><a class='link' href='#' id='logout'><i class='icon f7-icons'>logout</i></a></div>
-        <div class="center" id='room-name'></div>
-        <div class="right"><a class='link' href='settings.html' id='settings'><i class='icon f7-icons'>more_vertical</i></a></div>
+        <div class="center"></div>
+        <div class="right">
+            <a class='link' href='pages/device-list.html' id='open-device-list'><i class='icon f7-icons'>today</i></a>
+            <a class='link' href='pages/new-room.html' id='open-new-room'><i class='icon f7-icons'>add_round</i></a>
+        </div>
     </div>
 </div>
 

@@ -54,7 +54,7 @@
             if (Object.keys($db.rooms).length !== 0) {
                 return;
             }
-            // $('#cancel').setAttribute('data-disabled', true);
+            $('#cancel').style.display = 'none';
         });
         $app.onload(function() {
             var l = [];
@@ -113,29 +113,44 @@
                 }
 
                 var rid = $('#room-id').value;
-                var devs = $('#device-list input:checked', true);
-                $gateway.attr('room', rid, devs.map(function(i) { 
-                    return i.value; 
-                }));
-                $db.rooms.$update(function(o) {
-                    if (!rid) { return; }
-
-                    var r = (o[rid]) || (o[rid] = {});
-                    var img = $('#room-icon-list img[data-active]').src;
-                    var idx = img.lastIndexOf('/');
-                    $('#room-information input', true).forEach(function(i) {
-                        r[i.id] = i.value;
+                var selections = $('#device-list input', true)
+                    .reduce(function(p, i) { 
+                        p[i.value] = i.checked;
+                        return p;
+                    }, {});
+                $db.devices.$update(function(o) {
+                    Object.keys(selections).forEach(function(mac) {
+                        var dev = o[mac];
+                        if (!selections[mac]) {
+                            if (dev.room === rid) {
+                                dev.room = '';
+                                dev.x = null;
+                                dev.y = null;
+                            }
+                        }
+                        else if (dev.room !== rid) {
+                            dev.room = rid;
+                            dev.x = null;
+                            dev.y = null;
+                        }
                     });
-                    r.icon = img.substr(idx + 1);
-                }).$save();
+                }).$save()
+                .then(function() {
+                    return $db.rooms.$update(function(o) {
+                        if (!rid) { return; }
 
-                var rooms = Object.keys($db.rooms);
-                if (rooms.length === 1) {
-                    $mainView.router.loadPage('pages/room-view.html?rid=' + rooms[0]);
-                }
-                else {
-                    $mainView.router.loadPage('pages/room-list.html');
-                }
+                        var r = (o[rid]) || (o[rid] = {});
+                        var img = $('#room-icon-list img[data-active]').src;
+                        var idx = img.lastIndexOf('/');
+                        $('#room-information input', true).forEach(function(i) {
+                            r[i.id] = i.value;
+                        });
+                        r.icon = img.substr(idx + 1);
+                    }).$save(); 
+                })
+                .then(function() {
+                    return $mainView.router.loadPage('pages/room-view.html?rid=' + rid); 
+                });
             };
         });
         $app.onload(function() {
@@ -155,28 +170,25 @@
             };
         });
         $app.onload(function() {
-            var load = function(devices) {
-                var rid = $('#room-id').value;
-                var entries = [];
-                [].forEach.call(Object.keys(devices), function(type) {
-                    var list = devices[type];
-                    [].forEach.call(Object.keys(list), function(mac) {
-                        var dev = list[mac];
-                        // if (dev.room) { return; }
-
-                        var room = (dev.room) ? $db.rooms[dev.room] : null;
-                        entries.push($templates('#device-select', {
-                            mac: dev.mac,
-                            room: (room) ? room.name : '',
-                            name: dev.name || dev.dev,
-                            checked: (rid === dev.room) ? 'checked' : ''
-                        }));
-                    });
-                });
-                $('#device-list').innerHTML = entries.join('');
-                $gateway.updated(load, false);
-            };
-            $gateway.updated(load);
+            var rid = $('#room-id').value;
+            var entries = [];
+            Object.keys($db.devices).sort(function(a, b) {
+                var ra = $db.devices[a].room || '';
+                var rb = $db.devices[b].room || '';
+                return ra.localeCompare(rb);
+            })
+            .forEach(function(mac) {
+                var dev = $db.devices[mac];
+                var room = (dev.room) ? $db.rooms[dev.room] : null;
+                entries.push($templates('#device-select', {
+                    mac: mac,
+                    room: (room) ? room.name : '',
+                    name: dev.name,
+                    showMAC: (dev.name) ? 'display:none' : '',
+                    checked: (rid === dev.room) ? 'checked' : ''
+                }));
+            });
+            $('#device-list').innerHTML = entries.join('');
         });
     </script>
 
@@ -188,7 +200,7 @@
                 <div class="item-inner">
                     <div class="item-title">
                         <span class='name'>{{type}} {{name}}</span>
-                        <span class='mac'>{{mac}}</span>
+                        <span class='mac' style='{{showMAC}}'>{{mac}}</span>
                     </div>
                     <span class='room'>{{room}}</span>
                 </div>
@@ -197,7 +209,6 @@
     </script>
 
     <div class='page-content'>
-        <div class='login-screen-title' data-i18n-key='page-title'></div>
         <div class="content-block-title" data-i18n-key='room-information'></div>
         <input type='hidden' id='room-id'>
         <div class='list-block' id='room-information'>
@@ -243,7 +254,9 @@
 
         <div class='content-block'>
             <p class="buttons-row">
-                <!-- <a href="#" id='cancel' class="button button-raised link" data-i18n-key='cancel'></a> -->
+                <a href="#" id='cancel' class="button button-raised link back" data-i18n-key='cancel'></a>
+            </p>
+            <p class="buttons-row">
                 <a href="#" id='save' class="button button-fill button-raised link" data-i18n-key='done'></a>
             </p>
         </div>

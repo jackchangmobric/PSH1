@@ -1,7 +1,7 @@
 var $strings = function(json) {
-    var localize = function(page) {
+    var localize = function(page, container) {
         var def = json[page] || {};
-        var elements = $('*[data-i18n-key]', true);
+        var elements = $(container, '*[data-i18n-key]', true);
         [].forEach.call(elements, function(el) {
             var key = el.getAttribute('data-i18n-key');
             if (!key) {
@@ -13,20 +13,23 @@ var $strings = function(json) {
             var p = kv[1] || 'innerHTML';
             el[p] = def[k] || json[k] || k;
         });
+        $(container, '.strings [data-i18n-key]', true).forEach(function(i) {
+            i.id = i.getAttribute('data-i18n-key');
+        });
 
         $templates(null, def);
     };
 
     $app.onPageInit('*', function(e) {
-        localize(e.name);
+        localize(e.name, e.container);
     });
     $app.onPageBeforeAnimation('*', function(e) {
-        localize(e.name);
+        localize(e.name, e.container);
     });
 
-    setTimeout(function() {
+    // setTimeout(function() {
         $app.init();
-    }, 3000);
+    // }, 3000);
         return;
     // window.plugins.html5Video.initialize({
     //     'boot-video': 'img/boot2.m4v'

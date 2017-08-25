@@ -1,0 +1,107 @@
+<div data-page='sign-up' class='page no-navbar no-toolbar'>
+    <style>
+    input[data-empty] {
+        background: #ffb0b0 !important;
+    }
+    </style>
+    <script>
+        $app.onload(function(e) {
+            $('#done').onclick = function() {
+                var fields = $(e.container, 'input', true);
+                if (fields.filter(function(i) { return !i.value; }).length) {
+                    fields.forEach(function(i) {
+                        if (i.value) {
+                            i.removeAttribute('data-empty');
+                        }
+                        else {
+                            i.setAttribute('data-empty', true);                    
+                        }
+                    });
+                    return $app.alert($('#empty-fields').innerHTML);
+                }
+
+                if ($('#passwd').value !== $('#passwd-2').value) {
+                    return $app.alert($('#different-password').innerHTML);
+                }
+
+                $cloud.register({
+                    email: $(e.container, '#email').value,
+                    name: $(e.container, '#name').value,
+                    password: $(e.container, '#passwd').value
+                }).then(function(r) {
+                    if (r.status !== 200) {
+                        return $app.alert($('#error-' + r.status).innerHTML);
+                    }
+                    $mainView.router.back();
+                });
+            };
+        });    
+    </script>
+
+    <div class='page-content'>
+        <div class='strings'>
+            <span data-i18n-key='empty-fields'></span>
+            <span data-i18n-key='different-password'></span>
+            <span data-i18n-key='error-401'></span>
+            <span data-i18n-key='error-402'></span>
+            <span data-i18n-key='error-403'></span>
+            <span data-i18n-key='error-404'></span>
+            <span data-i18n-key='error-405'></span>
+        </div>
+
+        <div class='sign-up-title' data-i18n-key='page-title'></div>
+        <div class="content-block-title" data-i18n-key='basic-information'></div>
+        <div class='list-block' id='basic-information'><form>
+            <ul>
+                <li><div class='item-content'>
+                    <div class='item-media'><i class='icon f7-icons'>info</i></div>
+                    <div class='item-inner'>
+                        <div class='item-title label' data-i18n-key='email'></div>
+                        <div class='item-input'>
+                            <input type='text' id='email' data-i18n-key='empty-email:placeholder'>
+                        </div>
+                    </div>
+                </div></li>
+                <li><div class='item-content'>
+                    <div class='item-media'><i class='icon f7-icons'>email</i></div>
+                    <div class='item-inner'>
+                        <div class='item-title label' data-i18n-key='name'></div>
+                        <div class='item-input'>
+                            <input type='text' id='name' data-i18n-key='empty-name:placeholder'>
+                        </div>
+                    </div>
+                </div></li>
+            </ul>
+        </form></div>
+
+        <div class="content-block-title" data-i18n-key='login-information'></div>
+        <div class='list-block' id='login-information'><form>
+            <ul>
+                <li><div class='item-content'>
+                    <div class='item-media'><i class='icon f7-icons'>lock</i></div>
+                    <div class='item-inner'>
+                        <div class='item-title label' data-i18n-key='password'></div>
+                        <div class='item-input'>
+                            <input type='password' id='passwd' data-i18n-key='empty-password:placeholder'>
+                        </div>
+                    </div>
+                </div></li>
+                <li><div class='item-content'>
+                    <div class='item-media'><i class='icon f7-icons'>lock</i></div>
+                    <div class='item-inner'>
+                        <div class='item-title label' data-i18n-key='password-2'></div>
+                        <div class='item-input'>
+                            <input type='password' id='passwd-2' data-i18n-key='empty-password-2:placeholder'>
+                        </div>
+                    </div>
+                </div></li>
+            </ul>
+        </form></div>
+        <div class='content-block'>
+            <p class="buttons-row">
+                <a href="#" id='cancel' class="button button-raised link back" data-i18n-key='cancel'></a>
+                <a href="#" id='done' class="button button-fill button-raised link" data-i18n-key='done'></a>
+            </p>
+        </div>
+    </div>
+</div>
