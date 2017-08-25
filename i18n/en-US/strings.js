@@ -44,12 +44,17 @@ $strings({
             'empty-name': 'Display name',
         'mac': 'MAC address', 
             'empty-mac': '00AB1F234567',
+        'status': 'Status',
+        'ip': 'IP address',
+        
+        'import': 'Import devices',
         'cancel': 'Abort',
         'done': 'Done'
     },
     'new-device': {
         'basic-information': 'Basic Information',
         'name': 'Name',
+            'empty-name': 'Display name',
         'mac': 'MAC address',
         'type': 'Type',
 

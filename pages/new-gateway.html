@@ -18,7 +18,7 @@ $app.onload(function(e) {
 
     $(e.container, '#name').value = info.name;
     $(e.container, '#mac').value = info.mac;
-    $(e.container, '#status').value = $gateway.status(mac);
+    $(e.container, '#status').innerHTML = $gateway.status(mac);
     $(e.container, '#ip').innerHTML = $gateway.ips(mac).map(function(ip) {
         return "<input type='text' readonly value='" + ip + "''>";
     }).join('');
@@ -28,6 +28,9 @@ $app.onload(function(e) {
 $app.onload(function(e) {
     if (Object.keys($db.gateways).length === 0) {
         $('#cancel').style.display = 'none';
+    }
+    if (!e.query.mac) {
+        $('#import-from-gateway').style.display = 'none';        
     }
 
     $('#done').onclick = function() {
@@ -57,6 +60,26 @@ $app.onload(function(e) {
         });
     };
 });
+
+$app.onload(function(e) {
+    var gmac = e.query.mac;
+    console.info('-' + gmac);
+    if (!gmac) {
+        return;
+    }
+
+    $('#import-from-gateway').onclick = function() {
+console.info(gmac);
+        $db.devices.$update(function(tbl) {
+            $gateway.each(function(type, mac, dev) {
+                if (tbl[mac]) { return; }
+                if (dev.gateway !== gmac) { return; }
+                tbl[mac] = {type:type,name:'',room:'',x:0,y:0};
+            });
+        }).$save();
+    };
+});
+
 
     </script>
 
@@ -106,7 +129,7 @@ $app.onload(function(e) {
                     <div class='item-inner'>
                         <div class='item-title label' data-i18n-key='status'></div>
                         <div class='item-input'>
-                            <input type='text' id='status' readonly>
+                            <span id='status'></span>
                         </div>
                     </div>
                 </div></li>
@@ -120,6 +143,12 @@ $app.onload(function(e) {
                     </div>
                 </div></li>
             </ul>
+        </div>
+
+        <div class='content-block'>
+            <p class="buttons-row">
+                <a href="#" id='import-from-gateway' class="button button-raised link" data-i18n-key='import'></a>
+            </p>
         </div>
 
         <div class='content-block'>

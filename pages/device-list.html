@@ -5,6 +5,8 @@
         }
         .gateway-item .mac {
             color: gray;
+            position: absolute;
+            right: 48px;
         }
         .gateway-item .connection-status {
             display: inline-block;
@@ -82,15 +84,12 @@
                     });
                 });
             };
-            $('#import-from-gateway').onclick = function() {
-                $db.devices.$update(function(tbl) {
-                    $gateway.each(function(type, mac, dev) {
-                        if (tbl[mac]) { return; }
-                        tbl[mac] = {type:type,name:'',room:'',x:0,y:0};
-                    });
-                }).$save().then(reload);
-            };
             reload();
+        });
+        $app.onload(function() {
+            $('#add-new-gateway').onclick = function() {
+                $mainView.router.loadPage('pages/new-gateway.html');
+            };
         });
     </script>
 
@@ -118,16 +117,20 @@
     <div class="navbar-inner">
         <div class="left"><a class='link' href='pages/room-list.html'><i class='icon f7-icons'>chevron_left</i></a></div>
         <div class="center" id='title' data-i18n-key='page-title'></div>
-        <div class="right"><a class='link' href='#' id='add-new-device'><i class='icon f7-icons'>add_round</i></a></div>
+        <div class="right"></div>
     </div>
 </div>
 
 <div class='page-content' style='overflow-y: auto'>
-    <div class="content-block-title" data-i18n-key='gateways'></div>
+    <div class="content-block-title">
+        <span data-i18n-key='gateways'></span>
+        <span class='accessory' id='add-new-gateway'><i class='icon f7-icons'>add</i></span>
+    </div>
     <div class="list-block"><ul id='gateway-list-inner'></ul></div>
+
     <div class="content-block-title">
         <span data-i18n-key='devices'></span>
-        <span class='accessory' id='import-from-gateway' data-i18n-key='import-from-gateway'></span>
+        <span class='accessory' id='add-new-device'><i class='icon f7-icons'>add</i></span>
     </div>
     <div class="list-block"><ul id='device-list-inner'></ul></div>
 </div>

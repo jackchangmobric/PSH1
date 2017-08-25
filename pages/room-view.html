@@ -517,7 +517,12 @@ $app.onload(function(e) {
 });
 $app.onload(function(e) {
     var rid = e.query.rid;
-    $('#custom-modes').innerHTML = $db.modes[rid].map(function(mode) {
+    var modes = $db.modes[rid];
+    if (!modes) {
+        return;
+    }
+
+    $('#custom-modes').innerHTML = modes.map(function(mode) {
         return $templates('#custom-mode', {name: mode[0]});
     }).join('');
 });
