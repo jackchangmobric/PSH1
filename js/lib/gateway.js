@@ -54,7 +54,7 @@ var $gateway = (function(fake) {
 
             list.forEach(function(mac) {
                 if (r[mac] !== undefined) { return; }
-                r[mac] = { status: 0, inf: null };
+                r[mac] = { status: 0, inf: null, ips: [] };
             });
             Object.keys(r).forEach(function(mac) {
                 if (list.indexOf(mac) === -1) { delete r[mac]; }
@@ -122,6 +122,7 @@ var $gateway = (function(fake) {
                 var ips = r.data.ip;
                 if (!ips || ips.length === 0) { return Promise.reject(); }
 
+                info.ips = ips;
                 var i0 = 0;
                 var nextIP = function() {
                     if (i0 === ips.length) { return info.status = 0; }
@@ -187,6 +188,26 @@ var $gateway = (function(fake) {
     return {
         online: function(mac) {
             return (gatewayStatus[mac] === undefined) ? 0 : gatewayStatus[mac];
+        },
+        status: function(mac) {
+            var info = gatewayStatus[mac];
+            if (!info) {
+                return 'initializing';
+            }
+
+            switch (info.status) {
+                case 0: return 'offline';
+                case 1: return 'online';
+                case 2: return 'connecting';
+                default: return 'unknown';
+            }
+        },
+        ips: function(mac) {
+            var info = gatewayStatus[mac];
+            if (!info || !info.ips) {
+                return [];
+            }
+            return info.ips;
         },
         dump: function() {
             console.info(deviceStatus);

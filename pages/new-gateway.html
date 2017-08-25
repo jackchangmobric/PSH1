@@ -18,7 +18,11 @@ $app.onload(function(e) {
 
     $(e.container, '#name').value = info.name;
     $(e.container, '#mac').value = info.mac;
-    $(e.container, '#mac').readOnly = true;
+    $(e.container, '#status').value = $gateway.status(mac);
+    $(e.container, '#ip').innerHTML = $gateway.ips(mac).map(function(ip) {
+        return "<input type='text' readonly value='" + ip + "''>";
+    }).join('');
+
 });
 
 $app.onload(function(e) {
@@ -65,10 +69,13 @@ $app.onload(function(e) {
     </div>
     <div class='page-content'>
         <div class='strings'>
+        <span data-i18n-key='gateway-status-0'></span>
+        <span data-i18n-key='gateway-status-1'></span>
+        <span data-i18n-key='gateway-status-2'></span>
         </div>
 
         <div class="content-block-title" data-i18n-key='basic-information'></div>
-        <div class='list-block' id='basic-information'><form>
+        <div class='list-block' id='basic-information'>
             <ul>
                 <li><div class='item-content'>
                     <div class='item-media'><i class='icon f7-icons'>info</i></div>
@@ -89,7 +96,32 @@ $app.onload(function(e) {
                     </div>
                 </div></li>
             </ul>
-        </form></div>
+        </div>
+
+        <div class="content-block-title" data-i18n-key='status'></div>
+        <div class='list-block'>
+            <ul>
+                <li><div class='item-content'>
+                    <div class='item-media'><i class='icon f7-icons'>info</i></div>
+                    <div class='item-inner'>
+                        <div class='item-title label' data-i18n-key='status'></div>
+                        <div class='item-input'>
+                            <input type='text' id='status' readonly>
+                        </div>
+                    </div>
+                </div></li>
+                <li><div class='item-content'>
+                    <div class='item-media'><i class='icon f7-icons'>info</i></div>
+                    <div class='item-inner'>
+                        <div class='item-title label' data-i18n-key='ip'></div>
+                        <div class='item-input'>
+                            <span id='ip'></span>
+                        </div>
+                    </div>
+                </div></li>
+            </ul>
+        </div>
+
         <div class='content-block'>
             <p class="buttons-row">
                 <a href="#" id='cancel' class="button button-raised link back" data-i18n-key='cancel'></a>

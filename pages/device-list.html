@@ -6,6 +6,28 @@
         .gateway-item .mac {
             color: gray;
         }
+        .gateway-item .connection-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 12px;
+            background: white;
+        }
+        .gateway-item .connection-status.status-unknown {
+            background: gray;
+        }
+        .gateway-item .connection-status.status-offline {
+            background: red;
+        }
+        .gateway-item .connection-status.status-online {
+            background: lightgreen;
+        }
+        .gateway-item .connection-status.status-connecting {
+            background: orange;
+        }
+        .gateway-item .connection-status.status-initializing {
+            background: lightblue;
+        }
         .device-item .mac {
             color: gray;
         }
@@ -24,13 +46,14 @@
                 var gateway = $db.gateways[mac];
                 var info = {
                     name: gateway.name,
-                    mac: gateway.mac
+                    mac: gateway.mac,
+                    status: $gateway.status(mac)
                 };
                 entries.push($templates('#gateway-item', info));
             });
             $('#gateway-list-inner').innerHTML = entries.join('');
             $app.onload(function() {
-                $('#gateway-list-inner .gateway-item item-content', true).forEach(function(i) {
+                $('#gateway-list-inner .gateway-item .item-content', true).forEach(function(i) {
                     var mac = $(i, '.mac').innerHTML;
                     i.onclick = function() {
                         $mainView.router.loadPage('pages/new-gateway.html?mac=' + mac);
@@ -51,7 +74,7 @@
                 });
                 $('#device-list-inner').innerHTML = entries.join('');
                 $app.onload(function() {
-                    $('#device-list-inner .device-item item-content', true).forEach(function(i) {
+                    $('#device-list-inner .device-item .item-content', true).forEach(function(i) {
                         var mac = $(i, '.mac').innerHTML;
                         i.onclick = function() {
                             $mainView.router.loadPage('pages/new-device.html?mac=' + mac);
@@ -74,7 +97,7 @@
     <script id="gateway-item" type="text/template7"><li class="gateway-item swipeout">
         <div class="swipeout-content item-content">
             <div class="item-media"><i class='icon f7-icons'>radio</i></div>
-            <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span></div>
+            <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span><span class='connection-status status-{{status}}'></span></div>
         </div>
         <div class="swipeout-actions-right">
             <a href="#" class="swipeout-delete" data-i18n-key='delete'></a>
