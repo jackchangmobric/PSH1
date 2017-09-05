@@ -5,7 +5,7 @@
     }
     </style>
     <script>
-        $app.onload(function(e) {
+        $page.onload(function(e) {
             $('#done').onclick = function() {
                 var fields = $(e.container, 'input', true);
                 if (fields.filter(function(i) { return !i.value; }).length) {

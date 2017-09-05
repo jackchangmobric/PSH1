@@ -21,11 +21,33 @@ $app.onPageChange = function(page, cb) {
     $app.onPageInit(page, cb);
 };
 
+var $page = null;
 $app.onPageChange('*', function(e) {
-    // $container = e.container;
-    $app.onload = function(cb, d) {
-        setTimeout(function() { cb(e); }, d || 0);
+    if ($page) {
+        $page.onunload(false);
+    }
+
+    $page = {
+        onload: function(cb, d) {
+            setTimeout(function() { cb(e); }, d || 0);
+        },
+        onunload: (function() {
+            var evt = e;
+            var functions = [];
+            return function(cb) {
+                if (cb === false) {
+                    functions.forEach(function(cb) {
+                        try { cb(evt); }
+                        catch (e) { console.info(e); }
+                    });
+                }
+                else {
+                    functions.push(cb);
+                }
+            };
+        })()
     };
+
     // console.info('change to ' + e.name);
     $(e.container, 'script', true).forEach(function(scr) {
         var type = scr.type || 'text/javascript';

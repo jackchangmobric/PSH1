@@ -50,20 +50,20 @@
         }
     </style>
     <script>
-        $app.onload(function() {
+        $page.onload(function() {
             if (Object.keys($db.rooms).length !== 0) {
                 return;
             }
             $('#cancel').style.display = 'none';
         });
-        $app.onload(function() {
+        $page.onload(function() {
             var l = [];
             for (var i = 1; i <= 8; ++i) {
                 l.push('<img src="img/room-icons/' + i + '.png">')
             }
             $('#room-icon-list').innerHTML = l.join('');
         });
-        $app.onload(function() {
+        $page.onload(function() {
             var icons = $('#room-icon-list img', true);
             icons.forEach(function(icon) { icon.onclick = function() {
                 icons.forEach(function(i) {
@@ -72,7 +72,7 @@
                 });
             }; });
         });
-        $app.onload(function(e) {
+        $page.onload(function(e) {
             var rid = e.query.rid;
             if (!rid) {
                 rid = 'r_' + Date.now();
@@ -97,7 +97,16 @@
                 }
             }
         });
-        $app.onload(function() {
+        $page.onload(function() {
+            $('#cancel').onclick = function() {
+                var rid = $('#room-id').value;
+                if ($db.rooms[rid]) {
+                    return $mainView.router.loadPage('pages/room-view.html?rid=' + rid);                    
+                }
+                else {
+                    return $mainView.router.loadPage('pages/room-list.html');
+                }
+            };
             $('#save').onclick = function() {
                 $('#room-information input', true).forEach(function(i) {
                     if (!i.value) {
@@ -153,7 +162,7 @@
                 });
             };
         });
-        $app.onload(function() {
+        $page.onload(function() {
             $('#select-all').onclick = function() {
                 $('#device-list input', true).forEach(function(i) {
                     i.checked = true;
@@ -169,7 +178,7 @@
                 $('#deselect-all').style.display = 'none';
             };
         });
-        $app.onload(function() {
+        $page.onload(function() {
             var rid = $('#room-id').value;
             var entries = [];
             Object.keys($db.devices).sort(function(a, b) {
@@ -254,7 +263,7 @@
 
         <div class='content-block'>
             <p class="buttons-row">
-                <a href="#" id='cancel' class="button button-raised link back" data-i18n-key='cancel'></a>
+                <a href="#" id='cancel' class="button button-raised link" data-i18n-key='cancel'></a>
             </p>
             <p class="buttons-row">
                 <a href="#" id='save' class="button button-fill button-raised link" data-i18n-key='done'></a>

@@ -44,6 +44,7 @@ var $gateway = (function(fake) {
             if (w[2]) { p[_wid] = w; } // persistence
             return p;
         }, {});
+        updated.length = 0;
     });
 
     var gatewayStatus = (function() {
@@ -72,8 +73,16 @@ var $gateway = (function(fake) {
                 cl.prototype.init = function(mac, ip) {
                     this.mac = mac;
                     this.ip = ip;
-                    console.info('use http 8080 for ' + ip);
-                    return Promise.resolve(this);
+                    var self = this;
+                    return $http.get('http://' + ip + ':8080/stat')
+                        .then(function() {
+                            return self;
+                            // console.info('use http://' + ip + '8080 for ' + mac);                            
+                        })
+                        .catch(function(e) { 
+                            // console.info(e.toString()); 
+                            return Promise.reject(e); 
+                        });
                 };
                 cl.prototype.update = function() {
                     var mac = this.mac;
@@ -81,7 +90,7 @@ var $gateway = (function(fake) {
                     return Promise.all(types.map(function(type) {
                         var url = 'http://' + ip + ':8080/' + type + '.get_dev_list';
                         return new Promise(function(ok, ng) {
-                            $http.get(url).then(function(resp) {
+                            $http.get(url, {d:Date.now()}).then(function(resp) {
                                 if (resp.success !== 'true') { return; }
 
                                 resp.objects.forEach(function(dev) {
@@ -128,7 +137,6 @@ var $gateway = (function(fake) {
                     if (i0 === ips.length) { return info.status = 0; }
 
                     var ip = ips[i0++];
-                    console.info('check ip ' + ip);
                     var i1 = 0;
                     var talk = function() {
                         if (i1 === protocols.length) { return nextIP(); }
@@ -136,8 +144,12 @@ var $gateway = (function(fake) {
                             .then(function(inst) {
                                 info.inf = inst;
                                 info.status = 1;
+                                console.info('check ip ' + ip + ' done');
                             })
-                            .catch(talk);
+                            .catch(function() {
+                                console.info('check ip ' + ip + ' failed');
+                                talk();
+                            });
                     };
                     talk();
                 };
@@ -188,6 +200,9 @@ var $gateway = (function(fake) {
     return {
         online: function(mac) {
             return (gatewayStatus[mac] === undefined) ? 0 : gatewayStatus[mac];
+        },
+        state: function() {
+            console.info(gatewayStatus);
         },
         status: function(mac) {
             var info = gatewayStatus[mac];

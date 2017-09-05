@@ -5,7 +5,7 @@
     }
     </style>
     <script>
-$app.onload(function(e) {
+$page.onload(function(e) {
     var mac = e.query.mac;
     if (!mac) {
         return;
@@ -25,7 +25,7 @@ $app.onload(function(e) {
 
 });
 
-$app.onload(function(e) {
+$page.onload(function(e) {
     if (Object.keys($db.gateways).length === 0) {
         $('#cancel').style.display = 'none';
     }
@@ -61,7 +61,7 @@ $app.onload(function(e) {
     };
 });
 
-$app.onload(function(e) {
+$page.onload(function(e) {
     var gmac = e.query.mac;
     console.info('-' + gmac);
     if (!gmac) {

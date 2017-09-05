@@ -6,11 +6,17 @@ var $http = (function() {
         }
         return uri;
     };
-    return {
+    var timeout = null;
+    var inst = {
+        timeout: function(val) {
+            timeout = val;
+            return inst;
+        },
         get: function(method, options) {
             var uri = url(method, options);
             var xhttp = new XMLHttpRequest();
             return new Promise(function(ok, ng) {
+                xhttp.timeout = timeout; timeout = null;
                 xhttp.onreadystatechange = function() {
                     if (xhttp.readyState !== 4) {
                         return;
@@ -36,6 +42,7 @@ var $http = (function() {
             var uri = url(method, options);
             var xhttp = new XMLHttpRequest();
             return new Promise(function(ok, ng) {
+                xhttp.timeout = timeout; timeout = null;
                 xhttp.onreadystatechange = function() {
                     if (xhttp.readyState !== 4) {
                         return;
@@ -53,4 +60,5 @@ var $http = (function() {
             });
         }
     }; 
+    return inst;
 })();

@@ -109,41 +109,56 @@
     #saved-modes-panel {
         height: auto;
         box-shadow: 2px -2px 4px lightgrey;
-        background-color: rgba(255,255,255,0.9);
+        background-color: rgba(0,0,0,0.8);
     }
     #saved-modes-panel > .picker-modal-inner {
         line-height: 1em;
         /*padding: 16px;*/
     }
+    #saved-modes-panel #close-saved-modes-panel {
+        margin-right: 32px;
+        float: right;
+        font-weight: bold;
+    }
     #saved-modes-panel .saved-mode-group {
-        border-right: thin solid lightgrey;
-        display: inline-block;
-        padding: 24px 16px;
+        border-bottom: 1px solid dimgray;
+        display: block;
+        padding: 24px 24px;
         vertical-align: top;
-        height: 48px;
     }
     #saved-modes-panel .saved-mode-group:empty {
         display: none;
     }
     #saved-modes-panel .saved-mode-group:last-child {
-        float: right;
         border: none;
     }
     #saved-modes-panel .saved-mode {
-        background: darkgray;
-        display: inline-block;
-        border-radius: 48px;
+        background: dimgray;
+        display: block;
+        border-radius: 8px;
         height: 48px;
-        width: 48px;
-        padding: 0px;
+        /*width: 48px;*/
+        padding: 0px 24px;
         /*box-shadow: 2px 2px 6px gray;*/
-        font-size: 32px;
-        margin: 0px 8px;
-        text-align: center;
+        font-size: 24px;
+        margin: 16px 8px;
+        text-align: left;
+        color: white;
+    }
+    #saved-modes-panel .saved-mode[data-empty] {
+        color: lightgray;
     }
     #saved-modes-panel a i {
-        color: white;
+        /*color: lightblue;*/
         line-height: 48px;
+        margin-right: 24px;
+    }
+    #all-on i {
+        color: white;
+        text-shadow: 0px 0px 8px orange;
+    }
+    #all-off i {
+        color: darkgray;
     }
 
     #picker-lighting {
@@ -188,7 +203,17 @@
     }
     </style>
 <script>
-$app.onload(function(e) {
+
+var roomViewFormat = function(type, mac, wrgb) {
+    switch (type) {
+        case 'light_wrgb': return { mac: mac, levelW: wrgb[0], levelR: wrgb[1], levelG: wrgb[2], levelB: wrgb[3] };
+        case 'light_wy': return { mac: mac, levelW: wrgb[0], levelY: wrgb[4] };
+        case 'ac_switch': return { mac: mac, enable: wrgb[0] };
+    }
+    return null;
+};
+
+$page.onload(function(e) {
     var rid = e.query.rid;
     if (!rid) {
         console.error('empty room id');
@@ -218,32 +243,18 @@ $app.onload(function(e) {
     }
     $('#room-grid').innerHTML = rows.join('');
 });
-$app.onload(function() {
-    var base = 0;
-    $('#room-grid-outer').addEventListener('touchstart', function(e) {
-        if (e.touches.length !== 2) {
-            return;
-        }
-        var p1 = e.touches[0];
-        var p2 = e.touches[1];
-        var dx = p1.pageX - p2.pageX;
-        var dy = p1.pageY - p2.pageY;
-        base = Math.pow(dx * dx + dy * dy, 0.5);
-    });
-    $('#room-grid-outer').addEventListener('touchmove', function(e) {
-        if (base === 0) {
-            return;
-        }
-
-        var p1 = e.touches[0];
-        var p2 = e.touches[1];
-        var dx = p1.pageX - p2.pageX;
-        var dy = p1.pageY - p2.pageY;
-        var curr = Math.pow(dx * dx + dy * dy, 0.5);
-        console.info(curr / base);
+$page.onload(function(e) {
+    var rid = e.query.rid;
+    $gateway.updated(function() {
+        $('.device-icon', true).forEach(function(icon) {
+            var mac = icon.getAttribute('data-mac');
+            if ($db.devices[mac].room !== rid) {
+                icon.parentNode.removeChild(icon);
+            }
+        });
     });
 });
-$app.onload(function() {
+$page.onload(function() {
     var editing = false;
     var dnd = [null, null, null];
     $app.touchmove(function(e) {
@@ -312,25 +323,69 @@ $app.onload(function() {
 
             slot.innerHTML = $templates(template, devices[mac]);
         });
-        $app.onload(function() {
+        $page.onload(function() {
             $('.device-icon[data-new]', true).forEach(function(icon) {
+                var timer = null;
+                var type = icon.getAttribute('data-type');
+                var mac = icon.getAttribute('data-mac');
                 icon.addEventListener('touchstart', function(e) {
-                    if (!editing || e.touches.length !== 1) {
+                    if (!editing)  {
+                        timer = setTimeout(function() {
+                            var values = [
+                                [100,100,100,100,100],
+                                [0,0,0,0,0]
+                            ];
+                            var tidx = 0;
+                            var test = setInterval(function() {
+                                var payload = roomViewFormat(type, mac, (tidx) ? values[0] : values[1]);
+                                $gateway.set(mac, payload);
+                                tidx ^= 1;
+                            }, 1500);
+                            $app.modal({
+                                title: $('.strings #remove-device-confirm-title').innerHTML,
+                                text: $('.strings #remove-device-confirm').innerHTML,
+                                buttons: [
+                                    {
+                                        text: $('.strings #remove-confirm').innerHTML,
+                                        onClick: function() {
+                                            $db.devices.$update(function(tbl) {
+                                                delete tbl[mac].room;
+                                            }).$save().then(function() {
+                                                clearInterval(test);
+                                            });
+                                        }
+                                    },
+                                    {
+                                        text: $('.strings #remove-cancel').innerHTML,
+                                        onClick: function() { 
+                                            clearInterval(test);
+                                        }
+                                    }
+                                ]
+                            });
+                            clearTimeout(timer);
+                            timer = null;
+                        }, 1500);
+                    }
+                    else {
+                        dnd[0] = icon;
+                        dnd[1] = e.touches[0].pageX;
+                        dnd[2] = e.touches[0].pageY;                                
+                        $('#room-grid-outer').style.overflowY = 'hidden';
+                    }
+                });
+
+                icon.addEventListener('touchend', function(e) {
+                    if (!timer) {
                         return;
                     }
 
-                    dnd[0] = icon;
-                    dnd[1] = e.touches[0].pageX;
-                    dnd[2] = e.touches[0].pageY;                                
-                    $('#room-grid-outer').style.overflowY = 'hidden';
-                });
+                    clearTimeout(timer);
+                    timer = null;
+                    if (!icon.classList.contains('open-picker')) {                        
+                        return;
+                    }
 
-                if (!icon.classList.contains('open-picker')) {
-                    return;
-                }
-                icon.addEventListener('touchstart', function(e) {
-                    var type = icon.getAttribute('data-type');
-                    var mac = icon.getAttribute('data-mac');
                     var value = icon.getAttribute('data-value');
                     $('#picker-lighting').setAttribute('data-mac', mac);
                     $('#picker-lighting').setAttribute('data-mode', type);
@@ -341,7 +396,7 @@ $app.onload(function() {
             });
         });
     });
-    $app.onload(function() {
+    $page.onload(function() {
         $$('#edit-done-panel').on('picker:close', function() {
             editing = false;
             $('[data-page="room-view"]').removeAttribute('data-editable');                    
@@ -352,7 +407,7 @@ $app.onload(function() {
         });
     });
 });
-$app.onload(function(e) {
+$page.onload(function(e) {
     var rid = e.query.rid;
     var img = $('#color-picker img');
     var canvas = null;
@@ -360,14 +415,6 @@ $app.onload(function(e) {
     var mac = null;
     var data = null;
     var waiting = false;
-    var format = function(type, mac, wrgb) {
-        switch (type) {
-            case 'light_wrgb': return { mac: mac, levelW: wrgb[0], levelR: wrgb[1], levelG: wrgb[2], levelB: wrgb[3] };
-            case 'light_wy': return { mac: mac, levelW: wrgb[0], levelY: wrgb[4] };
-            case 'ac_switch': return { mac: mac, enable: wrgb[0] };
-        }
-        return null;
-    };
     var cap = function(v) {
         return (v > 100) ? 100 :
                (v < 0) ? 0 : v;
@@ -393,7 +440,7 @@ $app.onload(function(e) {
 
         waiting = true;
         var type = $('#picker-lighting').getAttribute('data-mode');
-        return $gateway.set(mac, format(type, mac, data))
+        return $gateway.set(mac, roomViewFormat(type, mac, data))
             .then(function() { waiting = false; });
     };
 
@@ -410,7 +457,7 @@ $app.onload(function(e) {
             }
 
             var dev = list[idx++];
-            var payload = format(dev.type, dev.mac, wrgb);
+            var payload = roomViewFormat(dev.type, dev.mac, wrgb);
             if (!payload) {
                 return setTimeout(send, 0);
             }
@@ -477,7 +524,7 @@ $app.onload(function(e) {
         apply(data, type);
     });
     $gateway.watch(function(type) {
-        $app.onload(function() {
+        $page.onload(function() {
             if (type !== 'ac_switch') {
                 return;
             }
@@ -490,62 +537,83 @@ $app.onload(function(e) {
                     
                     var val = icon.getAttribute('data-value');
                     var mac = icon.getAttribute('data-mac');
-                    $gateway.set(mac, format(type, mac, [(val == 0) ? '1' : '0']));
+                    $gateway.set(mac, roomViewFormat(type, mac, [(val == 0) ? '1' : '0']));
                 });
             });
         });
     });
 });
-$app.onload(function(e) {
+$page.onload(function(e) {
     var rid = e.query.rid;
-    $('#add-mode').onclick = function() {
-        $app.prompt('', 'mode-name-prompt', function(value) {
-            var icons = $(e.container, '.device-icon', true);
+    $('#custom-modes > .saved-mode', true).forEach(function(i, midx) {
+        var timer = null;
+        i.ontouchstart = function() {
+            timer = setTimeout(function() {
+                $app.prompt('', $('.strings #mode-name-prompt').innerHTML, function(name) {
+                    var icons = $(e.container, '.device-icon', true);
 
-            var mode = icons.reduce(function(p, c) {
-                var mac = c.getAttribute('data-mac');
-                var val = c.getAttribute('data-value');
-                p[mac] = val;
-                return p;
-            }, {});
+                    var mode = icons.map(function(c) {
+                        var type = c.getAttribute('data-type');
+                        var mac = c.getAttribute('data-mac');
+                        var val = c.getAttribute('data-value');
+                        return [type, mac, val];
+                    });
 
-            var modes = ($db.modes[rid]) || ($db.modes[rid] = []);
-            modes.push([value, mode]);
-            $db.modes.$save();
-        });
-    };
+                    $db.modes.$update(function(tbl) {
+                        ((tbl[rid]) || (tbl[rid] = []))[midx] = [name, mode];
+                    }).$save();
+                    $(i, '.name').innerHTML = name;
+                    i.removeAttribute('data-empty');
+                });
+                timer = null;
+            }, 1500);
+        };
+        i.ontouchend = function() {
+            if (!timer) {
+                return;
+            }
+
+            $db.modes[rid].forEach(function(mode) {
+                if (mode[0] !== $(i, '.name').innerHTML) { return; }
+                var records = mode[1];
+                var idx = 0;
+                var send = function() {
+                    if (idx === records.length) { return; }
+                    var type = records[idx][0];
+                    var mac = records[idx][1];
+                    var wrgb = records[idx++][2].split(',');
+                    var payload = roomViewFormat(type, mac, wrgb);
+                    if (!payload) {
+                        return setTimeout(send, 0);
+                    }
+                    $gateway.set(mac, payload).then(send);
+                };
+                send();
+            });
+            clearTimeout(timer);
+            timer = null;
+        };
+    });
 });
-$app.onload(function(e) {
+$page.onload(function(e) {
     var rid = e.query.rid;
     var modes = $db.modes[rid];
     if (!modes) {
         return;
     }
 
-    $('#custom-modes').innerHTML = modes.map(function(mode) {
-        return $templates('#custom-mode', {name: mode[0]});
-    }).join('');
-});
-$app.onload(function(e) {
-    var rid = e.query.rid;
-    $('.custom-mode span', true).forEach(function(p) {
-        p.onclick = function() {
-            $db.modes[rid].forEach(function(mode) {
-                if (mode[0] !== p.innerHTML) { return; }
-                var values = mode[1];
-                var macs = Object.keys(values);
-                var idx = 0;
-                var send = function() {
-                    if (idx === macs.length) { return; }
-                    var mac = macs[idx++];
-                    $gateway.set(mac, values[mac]).then(send);
-                };
-                send();
-            })
-        };
+    var nodes = $('#custom-modes > .saved-mode', true);
+    modes.forEach(function(mode, idx) {
+        if (idx >= nodes.length) { return; }
+        $(nodes[idx], '.name').innerHTML = mode[0];
+        nodes[idx].removeAttribute('data-empty');
     });
 });
 </script>
+
+<div class='strings'>
+<span id='mode-name-prompt' data-i18n-key='mode-name-prompt'></span>
+</div>
 
 <script id="device-icon-light_wrgb" type="text/template7"><a class='device-icon open-picker' data-type='{{type}}' data-picker='#picker-lighting' data-value='{{levelW}},{{levelR}},{{levelG}},{{levelB}},' data-mac='{{mac}}' id='m_{{mac}}' data-new>
 <i class='fa fa-superpowers' aria-hidden="true" style='color:rgb({{levelW}}%,{{levelW}}%,{{levelW}}%)'></i>
@@ -573,6 +641,13 @@ $app.onload(function(e) {
 
 <div class='page-content' style='overflow-y: auto'>
 
+    <div class='strings'>
+        <span id='remove-device-confirm-title' data-i18n-key='remove-device-confirm-title'></span>
+        <span id='remove-device-confirm' data-i18n-key='remove-device-confirm'></span>
+        <span id='remove-confirm' data-i18n-key='remove-confirm'></span>
+        <span id='remove-cancel' data-i18n-key='remove-cancel'></span>
+    </div>
+
     <div id='room-grid-outer'><table id='room-grid'></table></div>
     <a id='show-saved-modes' class='button button-fill open-picker' data-picker='#saved-modes-panel'><i class='icon f7-icons'>filter-fill</i></a>
 
@@ -598,17 +673,25 @@ $app.onload(function(e) {
         </div>
     </div></div></div>
 
-    <div class='picker-modal' id='saved-modes-panel'><div class='picker-modal-inner'><!-- 
-     --><span class='saved-mode-group'><!-- 
-        --><a id='all-on' class='saved-mode' data-value='100,100,100,100,100'><i class='icon f7-icons'>data_fill</i></a><!-- 
-        --><a id='all-off' class='saved-mode' data-value='0,0,0,0,0'><i class='icon f7-icons'>data</i></a>
-        </span><!-- 
+    <div class='picker-modal' id='saved-modes-panel'><div class='picker-modal-inner'>
+        <div class='list-block'>
+            <a href="#" id='close-saved-modes-panel' class="close-picker link" data-i18n-key='done'></a>
+        </div>
+        <div><!-- 
      --><span class='saved-mode-group' id='custom-modes'><!--
+        --><a class='saved-mode' data-empty='true'><i class="fa fa-bed"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
+        --><a class='saved-mode' data-empty='true'><i class="fa fa-bathtub"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
+        --><a class='saved-mode' data-empty='true'><i class="fa fa-coffee"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
+        --><a class='saved-mode' data-empty='true'><i class="fa fa-tv"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
+        --><a class='saved-mode' data-empty='true'><i class="fa fa-briefcase"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
+        --><a class='saved-mode' data-empty='true'><i class="fa fa-heart"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
      --></span><!-- 
-     --><span class='saved-mode-group'><!--
-         --><a id='add-mode' class='saved-mode'><i class='icon f7-icons'>add</i></a><!--         
-     --></span><!-- 
- --></div></div>
+     --><span class='saved-mode-group'><!-- 
+        --><a id='all-on' class='saved-mode' data-value='100,100,100,100,100'><i class="fa fa-power-off"></i><span data-i18n-key='all-on'></span></a><!-- 
+        --><a id='all-off' class='saved-mode' data-value='0,0,0,0,0'><i class="fa fa-power-off"></i><span data-i18n-key='all-off'></span></a>
+        </span><!-- 
+     --></div>
+    </div></div>
 
     <div class="picker-modal" id='edit-done-panel'><div class='picker-modal-inner'><div class='content-block'>
         <a href="#" id='edit-done' class="close-picker button button-fill button-raised link" data-i18n-key='done'></a>

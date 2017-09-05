@@ -1,6 +1,6 @@
 <div data-page='room-list' class='page navbar-fixed'>
     <script>
-        $app.onload(function() { setTimeout(function() {
+        $page.onload(function() { setTimeout(function() {
             var gateways = Object.keys($db.gateways);
             if (gateways.length === 0) {
                 console.info('new-gateway');
@@ -19,7 +19,7 @@
                 // return $mainView.router.loadPage('pages/room-view.html?rid=' + rooms[0]); 
             }
         }, 1000); });
-        $app.onload(function(e) {
+        $page.onload(function(e) {
             $('#logout').onclick = function() {
                 $db.reset();
                 setTimeout(function() {                    
@@ -27,7 +27,7 @@
                 }, 300);
             };
         });
-        $app.onload(function() {
+        $page.onload(function() {
             var entries = [];
             Object.keys($db.rooms).forEach(function(rid) {
                 var room = $db.rooms[rid];
@@ -38,16 +38,32 @@
                     d: room.d,
                     icon: room.icon,
                     description: room.description,
-                    scene: ''
+                    scene: '',
+                    '::delete': 'delete'
                 };
                 entries.push($templates('#room-item', info));
             });
             $('#room-list-inner').innerHTML = entries.join('');
         });
+        $page.onload(function() {
+            $$('.room-list-item.swipeout').on('swipeout:deleted', function (e) {
+                var rid = e.target.getAttribute('data-room-id');
+                $db.rooms.$update(function(tbl) {
+                    delete tbl[rid];
+                }).$save()
+                .then(function() { $db.devices.$update(function(devices) {
+                    Object.keys(devices).forEach(function(mac) {
+                        if (devices[mac].room === rid) {
+                            delete devices[mac].room;
+                        }
+                    });
+                }).$save(); });
+            }); 
+        });
     </script>
 
-    <script id="room-item" type="text/template7"><li>
-    <a href="pages/room-view.html?rid={{rid}}" class="item-link item-content">
+    <script id="room-item" type="text/template7"><li class='swipeout room-list-item' data-room-id='{{rid}}'>
+    <a href="pages/room-view.html?rid={{rid}}" class="item-link swipeout-content item-content">
         <div class="item-media"><img style='width:48px' src="img/room-icons/{{icon}}" width="80"></div>
         <div class="item-inner">
             <div class="item-title-row">
@@ -58,6 +74,9 @@
             <div class="item-text">{{description}}</div>
         </div>
     </a>
+    <div class="swipeout-actions-right">
+        <a href="#" class="swipeout-delete">{{delete}}</a>
+    </div>
     </li></script>
 
 <div class="navbar">

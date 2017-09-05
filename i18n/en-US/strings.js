@@ -31,11 +31,15 @@ $strings({
         'cancel': 'Abort',
         'done': 'Done'
     },
+    'room-list': {
+        'delete': 'Delete'
+    },
     'device-list': {
         'page-title': 'Devices',
         'gateways': 'gateways',
         'devices': 'devices',
-        'import-from-gateway': 'Import'
+        'import-from-gateway': 'Import',
+        'delete': 'Delete'
     },
     'new-gateway': {
         'page-title': 'New gateway',
@@ -87,6 +91,14 @@ $strings({
     'room-view':  {
         'edit': 'Edit',
         'done': 'Done',
-        'apply-all': 'Apply all'
+        'apply-all': 'Apply all',
+        'remove-device-confirm-title': 'Test device',
+        'remove-device-confirm': 'Is the flashing device in this room?',
+        'remove-confirm': 'No',
+        'remove-cancel': 'Yes',
+        'all-on': 'Turn all lights on',
+        'all-off': 'Turn all lights off',
+        'custom-mode': 'Long press to set...',
+        'mode-name-prompt': 'Enter mode name:'
     }
 });

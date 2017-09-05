@@ -5,7 +5,7 @@
     }
     </style>
     <script>
-$app.onload(function(e) {
+$page.onload(function(e) {
     var mac = e.query.mac;
     if (!mac) {
         return;
@@ -25,7 +25,7 @@ $app.onload(function(e) {
     });
 });
 
-$app.onload(function(e) {
+$page.onload(function(e) {
     $('#done').onclick = function() {
         var mac = $(e.container, 'input#mac').value;
         $db.devices.$update(function(db) {

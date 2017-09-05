@@ -29,7 +29,11 @@ $app.onPageInit('login', function (page) {
     var email = $db.user.email;
     if (email) {
         $db.sync().then(function() {
+                console.info('got');
             $app.startup();
+        })
+        .catch(function(e) {
+            console.info(e);
         });
     }
 

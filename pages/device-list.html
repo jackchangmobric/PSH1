@@ -39,22 +39,23 @@
         }
     </style>
     <script>
-        $app.onload(function() {
+        $page.onload(function() {
             console.info('reload rooms');
         });
-        $app.onload(function() {
+        $page.onload(function() {
             var entries = [];
             Object.keys($db.gateways).forEach(function(mac) {
                 var gateway = $db.gateways[mac];
                 var info = {
                     name: gateway.name,
                     mac: gateway.mac,
-                    status: $gateway.status(mac)
+                    status: $gateway.status(mac),
+                    '::delete': 'delete'
                 };
                 entries.push($templates('#gateway-item', info));
             });
             $('#gateway-list-inner').innerHTML = entries.join('');
-            $app.onload(function() {
+            $page.onload(function() {
                 $('#gateway-list-inner .gateway-item .item-content', true).forEach(function(i) {
                     var mac = $(i, '.mac').innerHTML;
                     i.onclick = function() {
@@ -62,20 +63,26 @@
                     };
                 });
             });
+            $$('.gateway-item.swipeout').on('swipeout:deleted', function (e) {
+                $db.gateways.$update(function(tbl) {
+                    delete tbl[$(e.target, '.mac').innerHTML];
+                }).$save();
+            }); 
         });
-        $app.onload(function() {
+        $page.onload(function() {
             var reload = function() {
                 var entries = [];
                 Object.keys($db.devices).forEach(function(mac) {
                     var dev = $db.devices[mac];
                     var info = {
                         mac: mac,
-                        name: dev.name
+                        name: dev.name,
+                        '::delete': 'delete'
                     };
                     entries.push($templates('#device-item', info));
                 });
                 $('#device-list-inner').innerHTML = entries.join('');
-                $app.onload(function() {
+                $page.onload(function() {
                     $('#device-list-inner .device-item .item-content', true).forEach(function(i) {
                         var mac = $(i, '.mac').innerHTML;
                         i.onclick = function() {
@@ -85,8 +92,14 @@
                 });
             };
             reload();
+
+            $$('.device-item.swipeout').on('swipeout:deleted', function (e) {
+                $db.devices.$update(function(tbl) {
+                    delete tbl[$(e.target, '.mac').innerHTML];
+                }).$save();
+            }); 
         });
-        $app.onload(function() {
+        $page.onload(function() {
             $('#add-new-gateway').onclick = function() {
                 $mainView.router.loadPage('pages/new-gateway.html');
             };
@@ -99,7 +112,7 @@
             <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span><span class='connection-status status-{{status}}'></span></div>
         </div>
         <div class="swipeout-actions-right">
-            <a href="#" class="swipeout-delete" data-i18n-key='delete'></a>
+            <a href="#" class="swipeout-delete">{{delete}}</a>
         </div>
     </li></script>
 
@@ -109,7 +122,7 @@
             <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span></div>
         </div>
         <div class="swipeout-actions-right">
-            <a href="#" class="swipeout-delete" data-i18n-key='delete'></a>
+            <a href="#" class="swipeout-delete">{{delete}}</a>
         </div>
     </li></script>
 
