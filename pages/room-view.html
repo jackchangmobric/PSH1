@@ -545,10 +545,13 @@ $page.onload(function(e) {
 });
 $page.onload(function(e) {
     var rid = e.query.rid;
+    console.info($('#custom-modes > .saved-mode', true))
     $('#custom-modes > .saved-mode', true).forEach(function(i, midx) {
         var timer = null;
-        i.ontouchstart = function() {
+        i.addEventListener('touchstart', function() {
+            console.info('set timeout')
             timer = setTimeout(function() {
+                console.info('how about this');
                 $app.prompt('', $('.strings #mode-name-prompt').innerHTML, function(name) {
                     var icons = $(e.container, '.device-icon', true);
 
@@ -567,8 +570,8 @@ $page.onload(function(e) {
                 });
                 timer = null;
             }, 1500);
-        };
-        i.ontouchend = function() {
+        });
+        i.addEventListener('touchend', function() {
             if (!timer) {
                 return;
             }
@@ -592,7 +595,7 @@ $page.onload(function(e) {
             });
             clearTimeout(timer);
             timer = null;
-        };
+        });
     });
 });
 $page.onload(function(e) {

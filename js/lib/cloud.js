@@ -50,7 +50,7 @@ var $cloud = (function() {
         login: function(opt) {
             return init().then(function() { 
                 if (fake) {
-                    console.info(opt)
+                    console.info(opt);
                     var db = window.localStorage;
                     var json = db.getItem('@user');
                     if (!json) {
@@ -94,7 +94,7 @@ var $cloud = (function() {
             return init().then(function() { 
                 if (fake) {
                     return Promise.resolve(response(200, null, {
-                        ip: ['10.10.1.1']
+                        ip: ['127.0.0.1']
                     }));
                 }
                 return $http.get(m('gateway.info'), { mac: mac }); 
