@@ -94,6 +94,7 @@ var $cloud = (function() {
             return init().then(function() { 
                 if (fake) {
                     return Promise.resolve(response(200, null, {
+                        // fake: true,
                         ip: ['10.10.1.1']
                     }));
                 }

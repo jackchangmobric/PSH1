@@ -70,11 +70,15 @@ var $gateway = (function(fake) {
             (function() {
                 var cl = function() {};
                 cl.prototype = {};
-                cl.prototype.init = function(mac, ip) {
+                cl.prototype.init = function(mac, ip, fake) {
                     this.mac = mac;
                     this.ip = ip;
+                    if (fake) {
+                        return Promise.resolve(this);
+                    }
+
                     var self = this;
-                    return $http.get('http://' + ip + ':8080/stat')
+                    return $http.get('http://' + ip + ':8080/info')
                         .then(function() {
                             return self;
                             // console.info('use http://' + ip + '8080 for ' + mac);                            
@@ -140,7 +144,7 @@ var $gateway = (function(fake) {
                     var i1 = 0;
                     var talk = function() {
                         if (i1 === protocols.length) { return nextIP(); }
-                        protocols[i1++]().init(mac, ip)
+                        protocols[i1++]().init(mac, ip, r.data.fake)
                             .then(function(inst) {
                                 info.inf = inst;
                                 info.status = 1;
