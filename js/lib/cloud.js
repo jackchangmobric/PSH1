@@ -94,7 +94,7 @@ var $cloud = (function() {
             return init().then(function() { 
                 if (fake) {
                     return Promise.resolve(response(200, null, {
-                        ip: ['127.0.0.1']
+                        ip: ['10.10.1.1']
                     }));
                 }
                 return $http.get(m('gateway.info'), { mac: mac }); 
