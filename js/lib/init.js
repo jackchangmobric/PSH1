@@ -192,12 +192,7 @@ var $db = (function() {
             });
         },
         reset: function() {
-            Object.keys($db).forEach(function(key) {
-                if (typeof($db[key]) === 'function') {
-                    return;
-                }
-                db.removeItem(key);
-            });
+            db.clear();
         }
     };
     mk(inst, 'user');
