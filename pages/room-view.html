@@ -338,7 +338,10 @@ $page.onload(function() {
                             var tidx = 0;
                             var test = setInterval(function() {
                                 var payload = roomViewFormat(type, mac, (tidx) ? values[0] : values[1]);
-                                $gateway.set(mac, payload);
+                                $gateway.set(mac, payload).then(function() {
+                                }).catch(function(e) {
+                                    $app.alert(e);
+                                });
                                 tidx ^= 1;
                             }, 1500);
                             $app.modal({
@@ -441,7 +444,11 @@ $page.onload(function(e) {
         waiting = true;
         var type = $('#picker-lighting').getAttribute('data-mode');
         return $gateway.set(mac, roomViewFormat(type, mac, data))
-            .then(function() { waiting = false; });
+            .then(function() { waiting = false; })
+            .catch(function(e) {
+                $app.alert(e);
+                waiting = false;
+            });
     };
 
     var apply = function(wrgb, type) {
@@ -461,7 +468,10 @@ $page.onload(function(e) {
             if (!payload) {
                 return setTimeout(send, 0);
             }
-            $gateway.set(dev.mac, payload).then(send);
+            $gateway.set(dev.mac, payload).then(send)
+            .catch(function(e) {
+                $app.alert(e);
+            });
         };
         setTimeout(send, 0);
         $app.showIndicator();
@@ -537,7 +547,13 @@ $page.onload(function(e) {
                     
                     var val = icon.getAttribute('data-value');
                     var mac = icon.getAttribute('data-mac');
-                    $gateway.set(mac, roomViewFormat(type, mac, [(val == 0) ? '1' : '0']));
+                    $gateway.set(mac, roomViewFormat(type, mac, [(val == 0) ? '1' : '0']))
+                        .then(function() {
+
+                        })
+                        .catch(function(e) {
+                            $app.alert(e);
+                        });
                 });
             });
         });
@@ -589,7 +605,13 @@ $page.onload(function(e) {
                     if (!payload) {
                         return setTimeout(send, 0);
                     }
-                    $gateway.set(mac, payload).then(send);
+                    $gateway.set(mac, payload).then(send)
+                        .then(function() {
+
+                        })
+                        .catch(function(e) {
+                            $app.alert(e);                            
+                        });
                 };
                 send();
             });

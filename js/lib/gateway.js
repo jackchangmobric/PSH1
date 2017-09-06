@@ -307,7 +307,7 @@ var $gateway = (function(fake) {
             if (!gateway || !gateway.inf) {
                 return Promise.reject('gateway not found');
             }
-            console.info(options);
+            // console.info(options);
 
             // console.info('update ' + mac + ' through ' + dev.gateway);
             // console.info(options);
