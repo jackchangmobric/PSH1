@@ -208,7 +208,7 @@ var roomViewFormat = function(type, mac, wrgb) {
     switch (type) {
         case 'light_wrgb': return { mac: mac, levelW: wrgb[0], levelR: wrgb[1], levelG: wrgb[2], levelB: wrgb[3] };
         case 'light_wy': return { mac: mac, levelW: wrgb[0], levelY: wrgb[4] };
-        case 'ac_switch': return { mac: mac, enable: wrgb[0] };
+        case 'ac_switch': return { mac: mac, enable: (wrgb[0] == 0) ? '0' : '1' };
     }
     return null;
 };
