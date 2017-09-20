@@ -3,31 +3,31 @@
         .gateway-item .name {
             display: inline-block;
         }
-        .gateway-item .mac {
+        .gateway-item .mac, .device-item .mac {
             color: gray;
             position: absolute;
             right: 48px;
         }
-        .gateway-item .connection-status {
+        .connection-status {
             display: inline-block;
             width: 12px;
             height: 12px;
             border-radius: 12px;
             background: white;
         }
-        .gateway-item .connection-status.status-unknown {
+        .connection-status[data-status=unknown] {
             background: gray;
         }
-        .gateway-item .connection-status.status-offline {
+        .connection-status[data-status=offline] {
             background: red;
         }
-        .gateway-item .connection-status.status-online {
+        .connection-status[data-status=online] {
             background: lightgreen;
         }
-        .gateway-item .connection-status.status-connecting {
+        .connection-status[data-status=connecting] {
             background: orange;
         }
-        .gateway-item .connection-status.status-initializing {
+        .connection-status[data-status=initializing] {
             background: lightblue;
         }
         .device-item .mac {
@@ -40,30 +40,47 @@
     </style>
     <script>
         $page.onload(function() {
-            console.info('reload rooms');
-        });
-        $page.onload(function() {
-            var entries = [];
-            Object.keys($db.gateways).forEach(function(mac) {
-                var gateway = $db.gateways[mac];
-                var info = {
-                    name: gateway.name,
-                    mac: gateway.mac,
-                    status: $gateway.status(mac),
-                    '::delete': 'delete'
-                };
-                entries.push($templates('#gateway-item', info));
-            });
-            $('#gateway-list-inner').innerHTML = entries.join('');
-            $page.onload(function() {
-                $('#gateway-list-inner .gateway-item .item-content', true).forEach(function(i) {
-                    var mac = $(i, '.mac').innerHTML;
-                    i.onclick = function() {
-                        $mainView.router.loadPage('pages/new-gateway.html?mac=' + mac);
-                    };
+            $gateway.watch(function(type, devices) {
+                Object.keys(devices).forEach(function(mac) {
+                    var el = $('#m' + mac);
+                    if (!el) { return; }
+
+                    var status = $(el, '.connection-status');
+                    if (!status) { return; }
+
+                    status.setAttribute('data-status', 'online');
                 });
             });
-            $$('.gateway-item.swipeout').on('swipeout:deleted', function (e) {
+        });
+        $page.onload(function() {
+            var reload = function() {
+                var entries = [];
+                Object.keys($db.gateways).forEach(function(mac) {
+                    var gateway = $db.gateways[mac];
+                    var info = {
+                        name: gateway.name,
+                        mac: gateway.mac,
+                        status: $gateway.status(mac),
+                        '::delete': 'delete'
+                    };
+                    entries.push($templates('#gateway-item', info));
+                });
+                $('#gateway-list-inner').innerHTML = entries.join('');
+                $page.onload(function() {
+                    $('#gateway-list-inner .gateway-item .item-content', true).forEach(function(i) {
+                        var mac = $(i, '.mac').innerHTML;
+                        i.onclick = function() {
+                            $mainView.router.loadPage('pages/new-gateway.html?mac=' + mac);
+                        };
+                    });
+                });
+            };
+            $gateway.changed(function() {
+                reload();
+            });
+            reload();
+
+            $$('.gateway-item.swipeout').on('swipeout:deleted', function(e) {
                 $db.gateways.$update(function(tbl) {
                     delete tbl[$(e.target, '.mac').innerHTML];
                 }).$save();
@@ -77,6 +94,7 @@
                     var info = {
                         mac: mac,
                         name: dev.name,
+                        status: 'offline',
                         '::delete': 'delete'
                     };
                     entries.push($templates('#device-item', info));
@@ -91,6 +109,23 @@
                     });
                 });
             };
+            $gateway.changed(function(gmac) {
+                console.info(gmac);
+                if ($gateway.online(gmac)) { return; }
+
+                $gateway.each(function(type, mac, dev) {
+                    console.info(dev.gateway + ' | ' + gmac);
+                    return dev.gateway === gmac;
+                }, function(type, mac, dev) {
+                    var el = $('#m' + mac);
+                    if (!el) { return; }
+
+                    var status = $(el, '.connection-status');
+                    if (!status) { return; }
+
+                    status.setAttribute('data-status', 'offline');                    
+                });
+            });
             reload();
 
             $$('.device-item.swipeout').on('swipeout:deleted', function (e) {
@@ -104,22 +139,27 @@
                 $mainView.router.loadPage('pages/new-gateway.html');
             };
         });
+        $page.onload(function() {
+            $('#add-new-device').onclick = function() {
+                $mainView.router.loadPage('pages/new-device.html');
+            };
+        });
     </script>
 
     <script id="gateway-item" type="text/template7"><li class="gateway-item swipeout">
         <div class="swipeout-content item-content">
             <div class="item-media"><i class='icon f7-icons'>radio</i></div>
-            <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span><span class='connection-status status-{{status}}'></span></div>
+            <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span><span class='connection-status' data-status='{{status}}'></span></div>
         </div>
         <div class="swipeout-actions-right">
             <a href="#" class="swipeout-delete">{{delete}}</a>
         </div>
     </li></script>
 
-    <script id="device-item" type="text/template7"><li class="device-item swipeout">
+    <script id="device-item" type="text/template7"><li class="device-item swipeout" id='m{{mac}}'>
         <div class="swipeout-content item-content">
             <div class="item-media"><i class='icon f7-icons'>social_instagram</i></div>
-            <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span></div>
+            <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span><span class='connection-status' data-status='{{status}}'></span></div>
         </div>
         <div class="swipeout-actions-right">
             <a href="#" class="swipeout-delete">{{delete}}</a>
@@ -128,7 +168,7 @@
 
 <div class="navbar">
     <div class="navbar-inner">
-        <div class="left"><a class='link' href='pages/room-list.html'><i class='icon f7-icons'>chevron_left</i></a></div>
+        <div class="left"><a class='link' href='pages/room-list.html'><i class='icon f7-icons'>chevron_left</i><span data-i18n-key='back'></span></a></div>
         <div class="center" id='title' data-i18n-key='page-title'></div>
         <div class="right"></div>
     </div>

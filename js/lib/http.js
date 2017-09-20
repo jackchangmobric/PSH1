@@ -14,7 +14,7 @@ var $http = (function() {
         },
         get: function(method, options) {
             var uri = url(method, options);
-            console.info(uri);
+            // console.info(uri);
             var xhttp = new XMLHttpRequest();
             return new Promise(function(ok, ng) {
                 xhttp.timeout = timeout; timeout = null;

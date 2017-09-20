@@ -16,13 +16,20 @@ $page.onload(function(e) {
         return;
     }
 
-    $(e.container, '#name').value = info.name;
-    $(e.container, '#mac').value = info.mac;
-    $(e.container, '#status').innerHTML = $gateway.status(mac);
-    $(e.container, '#ip').innerHTML = $gateway.ips(mac).map(function(ip) {
-        return "<input type='text' readonly value='" + ip + "''>";
-    }).join('');
-
+    var reload = function() {
+        $(e.container, '#name').value = info.name;
+        $(e.container, '#mac').value = info.mac;
+        $(e.container, '#status').innerHTML = $gateway.status(mac);
+        $(e.container, '#ip').innerHTML = $gateway.ips(mac).map(function(ip) {
+            return '<div>' + ip[0] + ':' + ip[1] + '</div>';
+        }).join('');
+    };
+    $gateway.changed(function(m) {
+        if (m === mac) {
+            reload();
+        }
+    });
+    reload();
 });
 
 $page.onload(function(e) {
@@ -63,20 +70,21 @@ $page.onload(function(e) {
 
 $page.onload(function(e) {
     var gmac = e.query.mac;
-    console.info('-' + gmac);
     if (!gmac) {
         return;
     }
 
     $('#import-from-gateway').onclick = function() {
-console.info(gmac);
+        $app.showIndicator();
         $db.devices.$update(function(tbl) {
             $gateway.each(function(type, mac, dev) {
                 if (tbl[mac]) { return; }
                 if (dev.gateway !== gmac) { return; }
                 tbl[mac] = {type:type,name:'',room:'',x:0,y:0};
             });
-        }).$save();
+        }).$save().then(function() {
+            $app.hideIndicator();
+        });
     };
 });
 

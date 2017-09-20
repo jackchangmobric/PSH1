@@ -192,7 +192,12 @@ var $db = (function() {
             });
         },
         reset: function() {
-            db.clear();
+            Object.keys(db)
+                .filter(function(n) { return n[0] !== '@'; })
+                .forEach(function(n) {
+                    db.removeItem(n);
+                });
+            return Promise.resolve();
         }
     };
     mk(inst, 'user');

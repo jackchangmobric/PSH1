@@ -13,6 +13,8 @@ $strings({
         'error-403': 'empty password',
         'error-404': 'wrong password',
         'error-405': 'internal service error',
+        'authenticating': 'Checking password',
+        'sync-db': 'Syncing with cloud',
     },
     'sign-up': {
         'page-title': '&nbsp',
@@ -32,14 +34,19 @@ $strings({
         'done': 'Done'
     },
     'room-list': {
-        'delete': 'Delete'
+        'delete': 'Delete',
+        'unit': 'ft.',
+        'done': 'Done',
+        'all-on': 'Turn all lights on',
+        'all-off': 'Turn all lights off',
     },
     'device-list': {
         'page-title': 'Devices',
         'gateways': 'gateways',
         'devices': 'devices',
         'import-from-gateway': 'Import',
-        'delete': 'Delete'
+        'delete': 'Delete',
+        'back': 'Back'
     },
     'new-gateway': {
         'page-title': 'New gateway',
@@ -99,6 +106,7 @@ $strings({
         'all-on': 'Turn all lights on',
         'all-off': 'Turn all lights off',
         'custom-mode': 'Long press to set...',
-        'mode-name-prompt': 'Enter mode name:'
+        'mode-name-prompt': 'Enter mode name:',
+        'back': 'Back'
     }
 });

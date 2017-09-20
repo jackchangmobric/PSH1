@@ -1,10 +1,25 @@
 <div data-page='room-list' class='page navbar-fixed'>
     <script>
+        var roomViewFormat = function(type, mac, wrgb) {
+            switch (type) {
+                case 'light_wrgb': return { mac: mac, levelW: wrgb[0], levelR: wrgb[1], levelG: wrgb[2], levelB: wrgb[3] };
+                case 'light_wy': return { mac: mac, levelW: wrgb[0], levelY: wrgb[4] };
+                case 'ac_switch': return { mac: mac, enable: (wrgb[0] == 0) ? '0' : '1' };
+            }
+            return null;
+        };
+
         $page.onload(function() { setTimeout(function() {
             var gateways = Object.keys($db.gateways);
             if (gateways.length === 0) {
                 console.info('new-gateway');
                 return $mainView.router.loadPage('pages/new-gateway.html');
+            }
+
+            var devices = Object.keys($db.devices);
+            if (devices.length === 0) {
+                console.info('device-list');
+                return $mainView.router.loadPage('pages/device-list.html'); 
             }
 
             var rooms = Object.keys($db.rooms);
@@ -13,7 +28,6 @@
                 return $mainView.router.loadPage('pages/new-room.html');
             }
 
-            var devices = Object.keys($db.devices);
             if (rooms.length === 1 && devices.length === 0) {
                 console.info('room-view');
                 // return $mainView.router.loadPage('pages/room-view.html?rid=' + rooms[0]); 
@@ -21,10 +35,11 @@
         }, 1000); });
         $page.onload(function(e) {
             $('#logout').onclick = function() {
-                $db.reset();
-                setTimeout(function() {                    
-                    location.reload();
-                }, 300);
+                $db.reset().then(function() {
+                    setTimeout(function() {                    
+                        location.reload();
+                    }, 300);
+                });
             };
         });
         $page.onload(function() {
@@ -39,7 +54,8 @@
                     icon: room.icon,
                     description: room.description,
                     scene: '',
-                    '::delete': 'delete'
+                    '::delete': 'delete',
+                    '::unit': 'unit'
                 };
                 entries.push($templates('#room-item', info));
             });
@@ -60,7 +76,174 @@
                 }).$save(); });
             }); 
         });
+
+        $page.onload(function(e) {
+            var apply = function(wrgb, type) {
+                var rid = $('#select-mode-panel').getAttribute('data-rid');
+                if (!rid) {
+                    return;
+                }
+
+                var list = $gateway.get(type, function(t, m, d) { 
+                    return $db.devices[m].room === rid;
+                });
+
+                var idx = 0;
+                var send = function() {
+                    if (idx === list.length) { 
+                        $app.hideIndicator();
+                        return;
+                    }
+
+                    var dev = list[idx++];
+                    var payload = roomViewFormat(dev.type, dev.mac, wrgb);
+                    if (!payload) {
+                        return setTimeout(send, 0);
+                    }
+                    $gateway.set(dev.mac, payload).then(send)
+                    .catch(function(e) {
+                        $app.alert(e);
+                    });
+                };
+                setTimeout(send, 0);
+                $app.showIndicator();
+            };
+
+            $('#select-mode-panel .saved-mode', true).forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var value = button.getAttribute('data-value');
+                    if (value) {
+                        return apply(value.split(',').map(function(v) { return v * 1; }))
+                    }
+                });
+            });
+        });
+
+        $page.onload(function() {
+            $('.room-list-item .select-mode', true).forEach(function(btn) {
+                btn.addEventListener('touchend', function() {
+                    var rid = btn.getAttribute('data-rid');
+                    if (!rid) {
+                        return $('#select-mode-panel #custom-modes').innerHTML = '';
+                    }
+
+                    $('#select-mode-panel').setAttribute('data-rid', rid);
+                    var modes = $db.modes[rid];
+                    if (!modes) {
+                        return $('#select-mode-panel #custom-modes').innerHTML = '';                
+                    }
+
+                    $('#select-mode-panel #custom-modes').innerHTML = modes.map(function(def) {
+                        return $templates('#saved-mode', { name: def[0] });
+                    }).join('');
+
+                    var apply = function(i) {
+                        modes.forEach(function(mode) {
+                            if (mode[0] !== $(i, '.name').innerHTML) { return; }
+                            var records = mode[1];
+                            var idx = 0;
+                            var send = function() {
+                                if (idx === records.length) { return; }
+                                var type = records[idx][0];
+                                var mac = records[idx][1];
+                                var wrgb = records[idx++][2].split(',');
+                                var payload = roomViewFormat(type, mac, wrgb);
+                                if (!payload) {
+                                    return setTimeout(send, 0);
+                                }
+                                $gateway.set(mac, payload).then(send)
+                                    .then(function() {
+
+                                    })
+                                    .catch(function(e) {
+                                        $app.alert(e);                            
+                                    });
+                            };
+                            send();
+                        });
+                    };
+
+                    setTimeout(function() { $('#select-mode-panel #custom-modes .saved-mode', true).forEach(function(i) {
+                        i.addEventListener('touchend', function() {
+                            apply(i);
+                        });
+                    }); }, 0);
+                });
+            });
+        });
     </script>
+
+
+ 
+    <style>
+        .room-list-item .tool-icon {
+            position: absolute;
+            right: 36px;
+            bottom: 12px;
+            display: block;
+            z-index: 100;
+        }
+        .room-list-item .tool-icon a {
+            margin-left: 12px;
+            display: inline-block;
+        }
+
+    #select-mode-panel {
+        height: auto;
+        max-height: 90%;
+        box-shadow: 2px -2px 4px lightgrey;
+        background-color: rgba(0,0,0,0.8);
+    }
+    #select-mode-panel > .picker-modal-inner {
+        line-height: 1em;
+        /*padding: 16px;*/
+    }
+    #select-mode-panel .close-picker {
+        display: block;
+        text-align: center;
+        font-weight: bold;
+    }
+    #select-mode-panel .saved-mode-group {
+        border-bottom: 1px solid dimgray;
+        display: block;
+        padding: 24px 24px;
+        vertical-align: top;
+    }
+    #select-mode-panel .saved-mode-group:empty {
+        display: none;
+    }
+    #select-mode-panel .saved-mode-group:last-child {
+        border: none;
+    }
+    #select-mode-panel .saved-mode {
+        background: dimgray;
+        display: block;
+        border-radius: 8px;
+        height: 48px;
+        /*width: 48px;*/
+        padding: 0px 24px;
+        /*box-shadow: 2px 2px 6px gray;*/
+        font-size: 24px;
+        margin: 16px 8px;
+        text-align: left;
+        color: white;
+    }
+    #select-mode-panel .saved-mode[data-empty] {
+        color: lightgray;
+    }
+    #select-mode-panel .saved-mode-group a i {
+        /*color: lightblue;*/
+        line-height: 48px;
+        margin-right: 24px;
+    }
+    #all-on i {
+        color: white;
+        text-shadow: 0px 0px 8px orange;
+    }
+    #all-off i {
+        color: darkgray;
+    }        
+    </style>
 
     <script id="room-item" type="text/template7"><li class='swipeout room-list-item' data-room-id='{{rid}}'>
     <a href="pages/room-view.html?rid={{rid}}" class="item-link swipeout-content item-content">
@@ -68,16 +251,24 @@
         <div class="item-inner">
             <div class="item-title-row">
                 <div class="item-title">{{name}}</div>
-                <div class="item-after">{{w}} x {{d}}</div>
+                <div class="item-after">{{w}}{{unit}} x {{d}}{{unit}}</div>
             </div>
             <div class="item-subtitle">{{scene}}</div>
             <div class="item-text">{{description}}</div>
         </div>
     </a>
+    <span class="tool-icon">
+        <a href="pages/new-room.html?rid={{rid}}&list=1"><i class='icon f7-icons'>compose</i></a>
+        <a href='#' class='select-mode open-picker' data-picker='#select-mode-panel' data-rid='{{rid}}'><i class='icon f7-icons'>filter-fill</i></a>
+    </span>
     <div class="swipeout-actions-right">
         <a href="#" class="swipeout-delete">{{delete}}</a>
     </div>
     </li></script>
+
+    <script id="saved-mode" type="text/template7"><!-- 
+     --><a class='saved-mode' data-empty='true'><i class="fa fa-bed"></i><span data-i18n-key='custom-mode' class='name'>{{name}}</span></a><!--     
+ --></script>
 
 <div class="navbar">
     <div class="navbar-inner">
@@ -92,6 +283,17 @@
 
 <div class='page-content' style='overflow-y: auto'>
     <div class="list-block media-list"><ul id='room-list-inner'></ul></div>
-</div>
+
+    <div class='picker-modal' id='select-mode-panel'><div class='picker-modal-inner'>
+        <a href="#" class="close-picker link"><i class='icon f7-icons'>chevron_down</i></a>
+        <div><!-- 
+     --><span class='saved-mode-group' id='custom-modes'><!--
+     --></span><!-- 
+     --><span class='saved-mode-group'><!-- 
+        --><a id='all-on' class='saved-mode' data-value='100,100,100,100,100'><i class="fa fa-power-off"></i><span data-i18n-key='all-on'></span></a><!-- 
+        --><a id='all-off' class='saved-mode' data-value='0,0,0,0,0'><i class="fa fa-power-off"></i><span data-i18n-key='all-off'></span></a>
+        </span><!-- 
+     --></div>
+    </div></div></div>
 
 </div>

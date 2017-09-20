@@ -97,14 +97,14 @@
                 }
             }
         });
-        $page.onload(function() {
+        $page.onload(function(e) {
             $('#cancel').onclick = function() {
                 var rid = $('#room-id').value;
-                if ($db.rooms[rid]) {
-                    return $mainView.router.loadPage('pages/room-view.html?rid=' + rid);                    
+                if (!$db.rooms[rid] || e.query.list) {
+                    return $mainView.router.loadPage('pages/room-list.html');
                 }
                 else {
-                    return $mainView.router.loadPage('pages/room-list.html');
+                    return $mainView.router.loadPage('pages/room-view.html?rid=' + rid);                    
                 }
             };
             $('#save').onclick = function() {
@@ -158,7 +158,12 @@
                     }).$save(); 
                 })
                 .then(function() {
-                    return $mainView.router.loadPage('pages/room-view.html?rid=' + rid); 
+                    if (e.query.list) {
+                        return $mainView.router.loadPage('pages/room-list.html');
+                    }
+                    else {
+                        return $mainView.router.loadPage('pages/room-view.html?rid=' + rid);                         
+                    }
                 });
             };
         });

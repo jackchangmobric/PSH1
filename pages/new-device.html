@@ -8,6 +8,7 @@
 $page.onload(function(e) {
     var mac = e.query.mac;
     if (!mac) {
+        $(e.container, 'input#mac').readOnly = false;
         return;
     }
 
@@ -28,20 +29,36 @@ $page.onload(function(e) {
 $page.onload(function(e) {
     $('#done').onclick = function() {
         var mac = $(e.container, 'input#mac').value;
-        $db.devices.$update(function(db) {
-            var info = db[mac];
-            if (!info) {
-                return;
-            }
+        if (!mac) {
+            return $mainView.router.loadPage('pages/device-list.html');
+        }
 
-            $(e.container, 'input', true).forEach(function(i) {
-                if (i.id === 'mac') { return; }
-                info[i.id] = i.value;
+        (($db.devices[mac]) ? Promise.resolve() : $gateway.add(mac))
+            .then(function() {
+                $db.devices.$update(function(db) {
+                    var info = db[mac];
+                    if (!info && e.query.mac) {
+                        return;
+                    }
+
+                    if (!info) { info = db[mac] = {}; }
+                    $(e.container, 'input', true).forEach(function(i) {
+                        if (i.id === 'mac') { return; }
+                        info[i.id] = i.value;
+                    });
+                }).$save().then(function() {
+                    $mainView.router.loadPage('pages/device-list.html');
+                });
+            })
+            .catch(function(e) {
+                $app.alert(e, '', function() {
+                    $mainView.router.loadPage('pages/device-list.html');                    
+                });
             });
-        }).$save().then(function() {
-            $mainView.router.loadPage('pages/device-list.html');
-        });
     };
+
+    // /add_dev_by_mac
+
 });
 
     </script>

@@ -12,9 +12,11 @@ $app.onPageInit('login', function (page) {
     $('#sign-in').onclick = function() {
         var username = $('#username').value;
         var password = $('#password').value;
+        $app.showPreloader($('#authenticating').innerHTML);
         login(username, password)
             .then(function(user) {
                 $db.user.$copy(user).$save().then(function() {
+                    $app.hidePreloader();
                     location.reload();
                 });
             })
@@ -28,8 +30,9 @@ $app.onPageInit('login', function (page) {
 
     var email = $db.user.email;
     if (email) {
+        $app.showPreloader($('#sync-db').innerHTML);
         $db.sync().then(function() {
-                console.info('got');
+            $app.hidePreloader();
             $app.startup();
         })
         .catch(function(e) {

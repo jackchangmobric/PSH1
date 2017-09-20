@@ -44,7 +44,9 @@ var $gateway = (function(fake) {
             if (w[2]) { p[_wid] = w; } // persistence
             return p;
         }, {});
+        stateCallbacks = [];
         updated.length = 0;
+        filter = null;
     });
 
     var gatewayStatus = (function() {
@@ -66,8 +68,8 @@ var $gateway = (function(fake) {
 
     var deviceStatus = (function() {
         var r = {};
-        var protocols = [
-            (function() {
+        var protocols = {
+            http: (function() {
                 var cl = function() {};
                 cl.prototype = {};
                 cl.prototype.init = function(mac, ip, fake) {
@@ -78,7 +80,7 @@ var $gateway = (function(fake) {
                     }
 
                     var self = this;
-                    return $http.get('http://' + ip + ':8080/info')
+                    return $http.timeout(3000).get('http://' + ip + ':8080/info')
                         .then(function() {
                             return self;
                             // console.info('use http://' + ip + '8080 for ' + mac);                            
@@ -88,23 +90,25 @@ var $gateway = (function(fake) {
                             return Promise.reject(e); 
                         });
                 };
+                cl.prototype.add = function(mac) {
+                    var ip = this.ip;
+                    var url = 'http://' + ip + ':8080/add_dev_by_mac';
+                    return $http.get(url, {d:Date.now(),mac:mac});
+                };
                 cl.prototype.update = function() {
                     var mac = this.mac;
-                    var ip = this.ip
+                    var ip = this.ip;
                     return Promise.all(types.map(function(type) {
                         var url = 'http://' + ip + ':8080/' + type + '.get_dev_list';
-                        return new Promise(function(ok, ng) {
-                            $http.get(url, {d:Date.now()}).then(function(resp) {
-                                if (resp.success !== 'true') { return; }
+                        return $http.get(url, {d:Date.now()}).then(function(resp) {
+                            if (resp.success !== 'true') { return; }
 
-                                resp.objects.forEach(function(dev) {
-                                    if (!dev) { return; }
-                                    dev.gateway = mac;
-                                    dev.type = type;
-                                    r[dev.mac] = dev;
-                                });
+                            resp.objects.forEach(function(dev) {
+                                if (!dev) { return; }
+                                dev.gateway = mac;
+                                dev.type = type;
+                                r[dev.mac] = dev;
                             });
-                            ok();
                         });
                     }));
                 };
@@ -124,12 +128,13 @@ var $gateway = (function(fake) {
 
                     var ip = this.ip
                     var url = 'http://' + ip + ':8080/' + method;
+                    console.info(options);
                     return $http.get(url, options);
                 };
 
                 return function() { return new cl(); };
             })(),
-        ];
+        };
         var negotiate = function(mac, info) {
             $cloud.query(mac).then(function(r) {
                 var ips = r.data.ip;
@@ -140,22 +145,29 @@ var $gateway = (function(fake) {
                 var nextIP = function() {
                     if (i0 === ips.length) { return info.status = 0; }
 
-                    var ip = ips[i0++];
-                    var i1 = 0;
-                    var talk = function() {
-                        if (i1 === protocols.length) { return nextIP(); }
-                        protocols[i1++]().init(mac, ip, r.data.fake)
-                            .then(function(inst) {
-                                info.inf = inst;
-                                info.status = 1;
-                                console.info('check ip ' + ip + ' done');
-                            })
-                            .catch(function() {
-                                console.info('check ip ' + ip + ' failed');
-                                talk();
+                    var entry = ips[i0++];
+                    var prot = entry[0];
+                    var handler = protocols[prot];
+                    // console.info(entry);
+                    if (handler === null) {
+                        return setTimeout(nextIP, 0);
+                    }
+
+                    var addr = entry[1];
+                    handler().init(mac, addr, r.data.fake)
+                        .then(function(inst) {
+                            info.inf = inst;
+                            info.status = 1;
+                            stateCallbacks.forEach(function(cb) {
+                                try { cb(mac); } catch (e) {}
                             });
-                    };
-                    talk();
+                            console.info('comm-port ' + prot + '://' + addr + ' ok');
+                        })
+                        .catch(function() {
+                            console.info('comm-port ' + prot + '://' + addr + ' ng');
+                            nextIP();
+                        });
+                    console.info('checking ' + prot + '://' + addr);
                 };
                 nextIP();
             })
@@ -170,6 +182,9 @@ var $gateway = (function(fake) {
                 if (info.status !== 0) { return; }
                 negotiate(mac, info);
                 info.status = 2; // checking...
+                stateCallbacks.forEach(function(cb) {
+                    try { cb(mac); } catch (e) {}
+                });
             });
         }, 1000);        
 
@@ -177,18 +192,36 @@ var $gateway = (function(fake) {
         setInterval(function updateAll() {
             if (waiting) { return; }
 
-            var macs = Object.keys(gatewayStatus).filter(function(mac) { return gatewayStatus[mac].status === 1});
-            if (macs.length === 0) {
-                return;
-            }
+            var macs = Object.keys(gatewayStatus).filter(function(mac) { 
+                return gatewayStatus[mac].status === 1
+            });
+            if (macs.length === 0) { return; }
+
             Promise.all(macs.map(function(mac) {
                 var info = gatewayStatus[mac];
                 return info.inf.update().catch(function() {
+                    console.info('update failed');
                     info.inf = null;
                     info.status = 0;
+                    stateCallbacks.forEach(function(cb) {
+                        try { cb(mac); } catch (e) {}
+                    });
                     return Promise.resolve();
                 });
             }))
+            .then(function() {
+                var n = 0;
+                Object.keys(r).forEach(function(mac) {
+                    if ($db.devices[mac].type !== r[mac].type) {
+                        $db.devices[mac].type = r[mac].type;
+                        n += 1;
+                    }
+                });
+                if (n !== 0) {
+                    console.info('upate device type');
+                    return $db.devices.$save();
+                }
+            })
             .then(function() { updating.forEach(function(cb) { cb(); }); })
             .then(refresh)
             .then(function() { waiting = false; });
@@ -199,11 +232,11 @@ var $gateway = (function(fake) {
     })();
 
     var savedStates = $db.savedStates;
-
+    var stateCallbacks = [];
 
     return {
         online: function(mac) {
-            return (gatewayStatus[mac] === undefined) ? 0 : gatewayStatus[mac];
+            return (gatewayStatus[mac] === undefined) ? 0 : gatewayStatus[mac].status === 1;
         },
         state: function() {
             console.info(gatewayStatus);
@@ -228,8 +261,29 @@ var $gateway = (function(fake) {
             }
             return info.ips;
         },
+        changed: function(cb) {
+            stateCallbacks.push(cb);
+        },
         dump: function() {
             console.info(deviceStatus);
+        },
+        add: function(mac) {
+            var macs = Object.keys(gatewayStatus).filter(function(mac) { 
+                return gatewayStatus[mac].status === 1;
+            });
+            if (macs.length === 0) { return Promise.reject('no gateway'); }
+
+            return Promise.all(macs.map(function(gmac) {
+                var info = gatewayStatus[gmac];
+                return info.inf.add(mac).catch(function() {
+                    console.info('add failed');
+                    info.inf = null;
+                    info.status = 0;
+                    stateCallbacks.forEach(function(cb) {
+                        try { cb(mac); } catch (e) {}
+                    });
+                });
+            }));
         },
         get: function(type, filter) {
             if (typeof(filter) === 'string') { 

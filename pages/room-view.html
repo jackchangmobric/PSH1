@@ -108,6 +108,7 @@
     }
     #saved-modes-panel {
         height: auto;
+        max-height: 90%;
         box-shadow: 2px -2px 4px lightgrey;
         background-color: rgba(0,0,0,0.8);
     }
@@ -116,8 +117,8 @@
         /*padding: 16px;*/
     }
     #saved-modes-panel #close-saved-modes-panel {
-        margin-right: 32px;
-        float: right;
+        display: block;
+        text-align: center;
         font-weight: bold;
     }
     #saved-modes-panel .saved-mode-group {
@@ -148,7 +149,7 @@
     #saved-modes-panel .saved-mode[data-empty] {
         color: lightgray;
     }
-    #saved-modes-panel a i {
+    #saved-modes-panel .saved-mode-group a i {
         /*color: lightblue;*/
         line-height: 48px;
         margin-right: 24px;
@@ -476,7 +477,7 @@ $page.onload(function(e) {
         setTimeout(send, 0);
         $app.showIndicator();
     };
-    $('.saved-mode', true).forEach(function(button) {
+    $('#saved-modes-panel .saved-mode', true).forEach(function(button) {
         button.addEventListener('click', function() {
             var value = button.getAttribute('data-value');
             if (value) {
@@ -561,79 +562,79 @@ $page.onload(function(e) {
 });
 $page.onload(function(e) {
     var rid = e.query.rid;
-    console.info($('#custom-modes > .saved-mode', true))
-    $('#custom-modes > .saved-mode', true).forEach(function(i, midx) {
-        var timer = null;
-        i.addEventListener('touchstart', function() {
-            console.info('set timeout')
-            timer = setTimeout(function() {
-                console.info('how about this');
-                $app.prompt('', $('.strings #mode-name-prompt').innerHTML, function(name) {
-                    var icons = $(e.container, '.device-icon', true);
 
-                    var mode = icons.map(function(c) {
-                        var type = c.getAttribute('data-type');
-                        var mac = c.getAttribute('data-mac');
-                        var val = c.getAttribute('data-value');
-                        return [type, mac, val];
+    var reload = function() {
+        var modes = $db.modes[rid];
+        if (!modes) {
+            return $('#saved-modes-panel #custom-modes').innerHTML = '';
+        }
+        $('#saved-modes-panel #custom-modes').innerHTML = modes.map(function(mode) {
+            return $templates('#saved-mode', {name: mode[0]});
+        }).join('');
+        setTimeout(function() {
+            $('#saved-modes-panel #custom-modes > .saved-mode', true).forEach(function(i, midx) {
+                i.addEventListener('touchend', function() {
+                    $db.modes[rid].forEach(function(mode) {
+                        if (mode[0] !== $(i, '.name').innerHTML) { return; }
+                        var records = mode[1];
+                        var idx = 0;
+                        var send = function() {
+                            if (idx === records.length) { return; }
+                            var type = records[idx][0];
+                            var mac = records[idx][1];
+                            var wrgb = records[idx++][2].split(',');
+                            var payload = roomViewFormat(type, mac, wrgb);
+                            if (!payload) {
+                                return setTimeout(send, 0);
+                            }
+                            $gateway.set(mac, payload).then(send)
+                                .then(function() {
+
+                                })
+                                .catch(function(e) {
+                                    $app.alert(e);                            
+                                });
+                        };
+                        send();
                     });
-
-                    $db.modes.$update(function(tbl) {
-                        ((tbl[rid]) || (tbl[rid] = []))[midx] = [name, mode];
-                    }).$save();
-                    $(i, '.name').innerHTML = name;
-                    i.removeAttribute('data-empty');
                 });
-                timer = null;
-            }, 1500);
-        });
-        i.addEventListener('touchend', function() {
-            if (!timer) {
-                return;
-            }
-
-            $db.modes[rid].forEach(function(mode) {
-                if (mode[0] !== $(i, '.name').innerHTML) { return; }
-                var records = mode[1];
-                var idx = 0;
-                var send = function() {
-                    if (idx === records.length) { return; }
-                    var type = records[idx][0];
-                    var mac = records[idx][1];
-                    var wrgb = records[idx++][2].split(',');
-                    var payload = roomViewFormat(type, mac, wrgb);
-                    if (!payload) {
-                        return setTimeout(send, 0);
-                    }
-                    $gateway.set(mac, payload).then(send)
-                        .then(function() {
-
-                        })
-                        .catch(function(e) {
-                            $app.alert(e);                            
-                        });
-                };
-                send();
             });
-            clearTimeout(timer);
-            timer = null;
-        });
-    });
-});
-$page.onload(function(e) {
-    var rid = e.query.rid;
-    var modes = $db.modes[rid];
-    if (!modes) {
-        return;
-    }
+        }, 0);
+    };
+    $('#confirm-new-mode').addEventListener('touchend', function() {
+        var name = $('#new-mode-name').value;
+        if (!name) {
+            return;
+        }
 
-    var nodes = $('#custom-modes > .saved-mode', true);
-    modes.forEach(function(mode, idx) {
-        if (idx >= nodes.length) { return; }
-        $(nodes[idx], '.name').innerHTML = mode[0];
-        nodes[idx].removeAttribute('data-empty');
+        var icons = $(e.container, '.device-icon', true);
+        var mode = icons.map(function(c) {
+            var type = c.getAttribute('data-type');
+            var mac = c.getAttribute('data-mac');
+            var val = c.getAttribute('data-value');
+            return [type, mac, val];
+        });
+
+        $db.modes.$update(function(tbl) {
+            ((tbl[rid]) || (tbl[rid] = [])).push([name, mode]);
+        }).$save().then(reload);
     });
+
+    $('#add-new-mode').addEventListener('touchend', function() {
+        $('#add-mode').setAttribute('data-enable', true);
+        $('#new-mode-name').focus();
+    });
+
+    $('#confirm-new-mode').addEventListener('touchend', function() {
+        $('#add-mode').removeAttribute('data-enable');
+    });
+    $('#cancel-new-mode').addEventListener('touchend', function() {
+        $('#add-mode').removeAttribute('data-enable');
+    });
+
+    reload();
 });
+
 </script>
 
 <div class='strings'>
@@ -651,11 +652,11 @@ $page.onload(function(e) {
 <script id="device-icon-ac_switch" type="text/template7"><a class='device-icon' data-type='{{type}}' data-value='{{enable}}' data-mac='{{mac}}' id='m_{{mac}}' data-new>
 <i class="fa fa-power-off" style='color:rgb({{enable}}00%, {{enable}}00%, {{enable}}00%)'></i>
 </a></script>
-<script id='custom-mode' type='text/template7'><a class='custom-mode saved-mode'><span style='line-height:48px'>{{name}}</span></a></script>
+<script id="saved-mode" type="text/template7"><a class='saved-mode' data-empty='true'><i class="fa fa-bed"></i><span data-i18n-key='custom-mode' class='name'>{{name}}</span></a></script>
 
 <div class="navbar">
     <div class="navbar-inner">
-        <div class="left"><a class='link' id='back-to-list' href='pages/room-list.html'><i class='icon f7-icons'>chevron_left</i></a></div>
+        <div class="left"><a class='link' id='back-to-list' href='pages/room-list.html'><i class='icon f7-icons'>chevron_left</i><span data-i18n-key='back'></span></a></div>
         <div class="center" id='room-name'></div>
         <div class="right">
             <a class='link' href='pages/new-room.html' id='open-room-setting'><i class='icon f7-icons'>gear</i></a>
@@ -698,18 +699,54 @@ $page.onload(function(e) {
         </div>
     </div></div></div>
 
+    <style>
+        #add-mode {
+            position: relative;
+        }
+        #add-mode #confirm-new-mode {
+            position: absolute;
+            right: 8px;
+            color: lightgreen;
+            display: none;
+        }
+        #add-mode #cancel-new-mode {
+            color: red;
+            display: none;
+        }
+        #add-mode #new-mode-name {
+            width: 0px;
+            padding: 0px;
+            margin: 0px;
+            background: darkgray;
+            color: white;
+            border: none;
+            -webkit-transition: width 0.3s;
+            transition: width 0.3s;
+        }
+
+        #add-mode[data-enable=true] #add-new-mode { display: none; }
+        #add-mode[data-enable=true] #cancel-new-mode,
+        #add-mode[data-enable=true] #confirm-new-mode {
+            display: inline-block;
+        }
+        #add-mode[data-enable=true] #new-mode-name {
+            width: calc(100% - 46px);
+            font-size: 18px;
+            padding: 4px 4px;
+        }
+    </style>
+
     <div class='picker-modal' id='saved-modes-panel'><div class='picker-modal-inner'>
-        <div class='list-block'>
-            <a href="#" id='close-saved-modes-panel' class="close-picker link" data-i18n-key='done'></a>
-        </div>
+        <a href="#" id='close-saved-modes-panel' class="close-picker link"><i class='icon f7-icons'>chevron_down</i></a>
         <div><!-- 
+     --><span class='saved-mode-group'><!--
+        --><a id='add-mode' class='saved-mode'><!-- 
+        --><i id='cancel-new-mode' class='icon f7-icons'>close</i><!--
+        --><i id='add-new-mode' class='icon f7-icons'>add_round</i><input id='new-mode-name'><!-- 
+        --><i id='confirm-new-mode' class='icon f7-icons'>check</i><!--
+        --></a><!--         
+     --></span><!-- 
      --><span class='saved-mode-group' id='custom-modes'><!--
-        --><a class='saved-mode' data-empty='true'><i class="fa fa-bed"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
-        --><a class='saved-mode' data-empty='true'><i class="fa fa-bathtub"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
-        --><a class='saved-mode' data-empty='true'><i class="fa fa-coffee"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
-        --><a class='saved-mode' data-empty='true'><i class="fa fa-tv"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
-        --><a class='saved-mode' data-empty='true'><i class="fa fa-briefcase"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
-        --><a class='saved-mode' data-empty='true'><i class="fa fa-heart"></i><span data-i18n-key='custom-mode' class='name'></span></a><!-- 
      --></span><!-- 
      --><span class='saved-mode-group'><!-- 
         --><a id='all-on' class='saved-mode' data-value='100,100,100,100,100'><i class="fa fa-power-off"></i><span data-i18n-key='all-on'></span></a><!-- 
