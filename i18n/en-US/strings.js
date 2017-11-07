@@ -1,13 +1,13 @@
 $strings({
     login: {
         'page-title': '',
-        'login-title': 'Sign In',
+        'login-title': 'sign in',
         'login-email': 'E-mail',
         'login-password': 'Password',
         'login-email-ph': 'johndoe@gmail.com',
         'login-password-ph': 'some top secrets',
         'forgot-password': 'forgot password?',
-        'sign-up': 'Sign Up',
+        'sign-up': 'sign up',
         'error-401': 'empty request',
         'error-402': 'empty email',
         'error-403': 'empty password',
@@ -15,6 +15,8 @@ $strings({
         'error-405': 'internal service error',
         'authenticating': 'Checking password',
         'sync-db': 'Syncing with cloud',
+        'check-gateway': 'Check gateway status',
+        'gateway-unavailable': 'Gateway not responding',
     },
     'sign-up': {
         'page-title': '&nbsp',
@@ -37,19 +39,19 @@ $strings({
         'delete': 'Delete',
         'unit': 'ft.',
         'done': 'Done',
-        'all-on': 'Turn all lights on',
-        'all-off': 'Turn all lights off',
+        'all-on': 'ALL lights on',
+        'all-off': 'ALL lights off',
     },
     'device-list': {
-        'page-title': 'Devices',
+        'page-title': 'DEVICES',
         'gateways': 'gateways',
         'devices': 'devices',
         'import-from-gateway': 'Import',
         'delete': 'Delete',
-        'back': 'Back'
+        'back': 'back'
     },
     'new-gateway': {
-        'page-title': 'New gateway',
+        'page-title': 'GATEWAY INFO',
         'basic-information': 'Basic Information',
         'name': 'Name', 
             'empty-name': 'Display name',
@@ -60,9 +62,11 @@ $strings({
         
         'import': 'Import devices',
         'cancel': 'Abort',
-        'done': 'Done'
+        'done': 'Done',
+        'auto-import-from-gateway': 'Import device list from gateway'
     },
     'new-device': {
+        'page-title': 'DEVICE INFO',
         'basic-information': 'Basic Information',
         'name': 'Name',
             'empty-name': 'Display name',
@@ -77,7 +81,8 @@ $strings({
         'done': 'Done'
     },
     'new-room': {
-        'page-title': '&nbsp',
+        'new-room-title': 'NEW ROOM',
+        'edit-room-title': 'ROOM SETTING',
         'room-information': 'Room Information',
         'name': 'Name', 
             'empty-name': 'Living room',
@@ -103,10 +108,13 @@ $strings({
         'remove-device-confirm': 'Is the flashing device in this room?',
         'remove-confirm': 'No',
         'remove-cancel': 'Yes',
-        'all-on': 'Turn all lights on',
-        'all-off': 'Turn all lights off',
+        'all-on': 'ALL lights on',
+        'all-off': 'ALL lights off',
         'custom-mode': 'Long press to set...',
         'mode-name-prompt': 'Enter mode name:',
-        'back': 'Back'
+        'back': 'back',
+        'delete': 'Delete',
+        'brightness': 'BRIGHTNESS',
+        'current': 'CURRENT'
     }
 });

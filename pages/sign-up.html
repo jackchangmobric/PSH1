@@ -1,8 +1,79 @@
 <div data-page='sign-up' class='page no-navbar no-toolbar'>
     <style>
-    input[data-empty] {
+    .page[data-page='sign-up'] {
+        background-image: url(img/login-background.png);
+        background-position: center -60px;
+        background-repeat: no-repeat;
+        background-size: 100% auto;
+        /*background-color: white !important;*/
+        padding-top: 260px;
+    }
+
+
+
+    .page[data-page='sign-up'] .content-block-title {
+        margin: 0px;
+        padding: 16px 40px;
+    }
+    .page[data-page='sign-up'] .item-content {
+        margin: 0px 40px 0px 40px;
+        padding: 4px 0px;
+        border-bottom: thin solid #CCC;
+        padding-left: 0px;
+    }
+
+    .page[data-page='sign-up'] .item-content .item-inner {
+        margin-right: 0px;
+    }
+    .page[data-page='sign-up'] .item-content .item-inner:after {
+        display: none;
+    }
+
+    .page[data-page='sign-up'] .item-content .item-title {
+        background-repeat: no-repeat;
+        background-position: left middle;
+        background-size: 24px;
+        padding-left: 32px;
+    }
+
+    .page[data-page='sign-up'] .item-content .item-title[data-i18n-key='email'] {
+        background-image: url(img/icons/dl_07.png);
+    }
+    .page[data-page='sign-up'] .item-content .item-title[data-i18n-key='name'] {
+        background-image: url(img/icons/fjsz_03.png);
+    }
+    .page[data-page='sign-up'] .item-content .item-title[data-i18n-key='password'] {
+        background-image: url(img/icons/dl_11.png);
+    }
+    .page[data-page='sign-up'] .item-content .item-title[data-i18n-key='password-2'] {
+        background-image: url(img/icons/dl_11.png);
+    }
+
+    .page[data-page='sign-up'] .item-content input {
+        text-align: right;
+    }
+
+    .page[data-page='sign-up'] .item-media img {
+        width: 32px;
+    }
+
+    .page[data-page='sign-up'] input[data-empty] {
         background: #ffb0b0 !important;
     }
+
+    .page[data-page='sign-up'] .content-block {
+        margin: 40px 40px 0px 40px;
+        padding: 0px;
+    }
+    .page[data-page='sign-up'] #cancel {
+        margin-right: 16px;
+    }
+    .page[data-page='sign-up'] #done {
+    }
+/*                <a href="#" id='cancel' class="button button-raised link back" data-i18n-key='cancel'></a>
+                <a href="#" id='done' class="button button-fill button-raised link" data-i18n-key='done'></a>
+*/
+
     </style>
     <script>
         $page.onload(function(e) {
@@ -49,12 +120,11 @@
             <span data-i18n-key='error-405'></span>
         </div>
 
-        <div class='sign-up-title' data-i18n-key='page-title'></div>
         <div class="content-block-title" data-i18n-key='basic-information'></div>
         <div class='list-block' id='basic-information'><form>
             <ul>
                 <li><div class='item-content'>
-                    <div class='item-media'><i class='icon f7-icons'>info</i></div>
+                    <!-- <div class='item-media'><img src='img/icons/dl_07.png'></div> -->
                     <div class='item-inner'>
                         <div class='item-title label' data-i18n-key='email'></div>
                         <div class='item-input'>
@@ -63,7 +133,7 @@
                     </div>
                 </div></li>
                 <li><div class='item-content'>
-                    <div class='item-media'><i class='icon f7-icons'>email</i></div>
+                    <!-- <div class='item-media'><img src='img/icons/fjsz_03.png'></div> -->
                     <div class='item-inner'>
                         <div class='item-title label' data-i18n-key='name'></div>
                         <div class='item-input'>
@@ -78,7 +148,7 @@
         <div class='list-block' id='login-information'><form>
             <ul>
                 <li><div class='item-content'>
-                    <div class='item-media'><i class='icon f7-icons'>lock</i></div>
+                    <!-- <div class='item-media'><i class='icon f7-icons'>lock</i></div> -->
                     <div class='item-inner'>
                         <div class='item-title label' data-i18n-key='password'></div>
                         <div class='item-input'>
@@ -87,7 +157,7 @@
                     </div>
                 </div></li>
                 <li><div class='item-content'>
-                    <div class='item-media'><i class='icon f7-icons'>lock</i></div>
+                    <!-- <div class='item-media'><i class='icon f7-icons'>lock</i></div> -->
                     <div class='item-inner'>
                         <div class='item-title label' data-i18n-key='password-2'></div>
                         <div class='item-input'>

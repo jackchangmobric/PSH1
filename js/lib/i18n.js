@@ -27,20 +27,22 @@ var $strings = function(json) {
         localize(e.name, e.container);
     });
 
-    // setTimeout(function() {
+    var images = $('.image-template img', true);
+    var cnt = images.length;
+    var inc = function() {
+        if ((--cnt) === 0) {
+            $app.init();
+        }
+    };
+    if (cnt === 0) {
         $app.init();
-    // }, 3000);
-        return;
-    // window.plugins.html5Video.initialize({
-    //     'boot-video': 'img/boot2.m4v'
-    // });
-    // window.plugins.html5Video.play('boot-video', function(e) {
-    //     $app.init();
-    // });
-
-// console.info()
-// window.plugins.videoPlayer.play("file:///path/to/my/video.mp4");
-    // $mainView.router.loadPage('#floorplan');
+    }
+    else {
+        images.forEach(function(i) {
+            if (i.width) { return inc(); }
+            i.onload = inc;
+        });
+    }
 };
 
 var $templates = (function() {

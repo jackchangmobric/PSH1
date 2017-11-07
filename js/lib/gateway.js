@@ -73,6 +73,7 @@ var $gateway = (function(fake) {
                 var cl = function() {};
                 cl.prototype = {};
                 cl.prototype.init = function(mac, ip, fake) {
+                    // console.info('init ' + mac + ' ' + ip);
                     this.mac = mac;
                     this.ip = ip;
                     if (fake) {
@@ -212,8 +213,13 @@ var $gateway = (function(fake) {
             .then(function() {
                 var n = 0;
                 Object.keys(r).forEach(function(mac) {
-                    if ($db.devices[mac].type !== r[mac].type) {
-                        $db.devices[mac].type = r[mac].type;
+                    var dev = $db.devices[mac];
+                    if (!dev) {
+                        return;
+                    }
+
+                    if (dev.type !== r[mac].type) {
+                        dev.type = r[mac].type;
                         n += 1;
                     }
                 });

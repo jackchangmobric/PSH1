@@ -88,8 +88,37 @@ $app.touchmove = (function() {
     });
     return function(fn) { cb.push(fn) };
 })();
+$app.addStartupItem = function(key, options, oneShot) {
+    $db.pendingItems.$update(function(tbl) {
+        tbl[Date.now()] = {
+            key: key,
+            options: options,
+            oneShot: oneShot
+        };
+    }).$save(true);
+};
 $app.startup = function() {
-    $mainView.router.loadPage('pages/room-list.html');  
+    return Promise.all(Object.keys($db.pendingItems).map(function(id) {
+        var item = $db.pendingItems[id];
+        var key = item.key;
+        var func = $startupItem[key];
+        if (!func) {
+            return Promise.resolve();
+        }
+
+        return func(item.options).then(function() {
+            if (item.oneShot) {
+                $db.pendingItems.$update(function(tbl) {
+                    delete tbl[id];
+                }).$save(true);
+            }
+        }).catch(function(e) {
+            console.info(e);
+            return Promise.resolve();
+        });
+    })).then(function() {
+        $mainView.router.loadPage('pages/room-list.html');        
+    });
 };
 
 var $db = (function() {
@@ -205,6 +234,7 @@ var $db = (function() {
     mk(inst, 'gateways');
     mk(inst, 'devices');
     mk(inst, 'modes');
+    mk(inst, 'pendingItems');
 
     return inst;
 })();

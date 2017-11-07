@@ -1,8 +1,27 @@
-<div data-page='new-gateway' class='page no-navbar no-toolbar'>
+<div data-page='new-gateway' class='page navbar-fixed no-toolbar'>
     <style>
-    input[data-empty] {
+    [data-page='new-gateway'] input[data-empty] {
         background: #ffb0b0 !important;
     }
+    [data-page='new-gateway'] .item-content .item-title {
+        padding-left: 32px;
+        background-position: left;
+        background-repeat: no-repeat;
+        background-size: 24px;
+    }
+    [data-page='new-gateway'] .item-content .item-title[data-i18n-key='name'] {
+        background-image: url(img/icons/fjsz_03.png);        
+    }
+    [data-page='new-gateway'] .item-content .item-title[data-i18n-key='mac'] {
+        background-image: url(img/icons/sb_03.png);                
+    }
+    [data-page='new-gateway'] .item-content .item-title[data-i18n-key='status'] {
+        background-image: url(img/icons/zt_03.png);        
+    }
+    [data-page='new-gateway'] .item-content .item-title[data-i18n-key='ip'] {
+        background-image: url(img/icons/dl_11.png);        
+    }
+
     </style>
     <script>
 $page.onload(function(e) {
@@ -37,33 +56,47 @@ $page.onload(function(e) {
         $('#cancel').style.display = 'none';
     }
     if (!e.query.mac) {
-        $('#import-from-gateway').style.display = 'none';        
+        $('#import-from-gateway-outer').style.display = 'none';        
+        $('#auto-import-from-gateway-outer').style.display = '';
+    }
+    else {
+        $('#import-from-gateway-outer').style.display = '';        
+        $('#auto-import-from-gateway-outer').style.display = 'none';
     }
 
     $('#done').onclick = function() {
+
         var empty = $(e.container, 'input', true).reduce(function(p, c) {
+            if (c.type === 'checkbox') {
+                return p;
+            }
             if (c.value) { 
                 c.removeAttribute('data-empty');
                 return p; 
             }
-            else {
-                c.setAttribute('data-empty', true);
-                return p + 1;
-            }
+            c.setAttribute('data-empty', true);
+            return p + 1;
         }, 0);
+
         if (empty) {
             return;
         }
 
         var name = $(e.container, '#name').value;
         var mac = $(e.container, '#mac').value;
+        if ($('#auto-import-from-gateway').checked) {
+            $app.addStartupItem('import-from-gateway', {
+                gmac: mac
+            }, true);
+        }
+        
         $db.gateways.$update(function(db) {
             db[mac] = {
                 name: name,
                 mac: mac
             };
         }).$save().then(function() {
-            $app.startup();
+            location.reload();
         });
     };
 });
@@ -109,7 +142,6 @@ $page.onload(function(e) {
         <div class='list-block' id='basic-information'>
             <ul>
                 <li><div class='item-content'>
-                    <div class='item-media'><i class='icon f7-icons'>info</i></div>
                     <div class='item-inner'>
                         <div class='item-title label' data-i18n-key='name'></div>
                         <div class='item-input'>
@@ -118,7 +150,6 @@ $page.onload(function(e) {
                     </div>
                 </div></li>
                 <li><div class='item-content'>
-                    <div class='item-media'><i class='icon f7-icons'>radio</i></div>
                     <div class='item-inner'>
                         <div class='item-title label' data-i18n-key='mac'></div>
                         <div class='item-input'>
@@ -133,7 +164,6 @@ $page.onload(function(e) {
         <div class='list-block'>
             <ul>
                 <li><div class='item-content'>
-                    <div class='item-media'><i class='icon f7-icons'>info</i></div>
                     <div class='item-inner'>
                         <div class='item-title label' data-i18n-key='status'></div>
                         <div class='item-input'>
@@ -142,7 +172,6 @@ $page.onload(function(e) {
                     </div>
                 </div></li>
                 <li><div class='item-content'>
-                    <div class='item-media'><i class='icon f7-icons'>info</i></div>
                     <div class='item-inner'>
                         <div class='item-title label' data-i18n-key='ip'></div>
                         <div class='item-input'>
@@ -153,7 +182,16 @@ $page.onload(function(e) {
             </ul>
         </div>
 
-        <div class='content-block'>
+        <div class='list-block' id='auto-import-from-gateway-outer'>
+            <ul><li>
+                <label class="label-checkbox item-content">
+                    <input type="checkbox" id="auto-import-from-gateway" value="" checked="checked">
+                    <div class="item-media"><i class="icon icon-form-checkbox"></i></div>
+                    <div class="item-inner"><div class="item-title" data-i18n-key='auto-import-from-gateway'></div></div>
+                  </label>
+            </li></ul>
+        </div>
+        <div class='content-block' id='import-from-gateway-outer'>
             <p class="buttons-row">
                 <a href="#" id='import-from-gateway' class="button button-raised link" data-i18n-key='import'></a>
             </p>

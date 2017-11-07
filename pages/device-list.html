@@ -1,39 +1,64 @@
 <div data-page='device-list' class='page navbar-fixed'>
     <style>
-        .gateway-item .name {
+        [data-page='device-list'] .accessory i {
+            border-radius: 17px;
+            background: white;
+            width: 17px;
+            height: 17px;
+            text-align: center;
+            padding: 4px;
+            font-size: 24px;
+            line-height: 17px;
+            box-shadow: 0px 0px 4px 4px rgba(91, 142, 236, 0.3);
+        }
+        [data-page='device-list'] .gateway-item .name {
             display: inline-block;
         }
-        .gateway-item .mac, .device-item .mac {
-            color: gray;
+        [data-page='device-list'] .gateway-item .mac, 
+        [data-page='device-list'] .device-item .mac {
+            color: #CCC;
             position: absolute;
             right: 48px;
+            font-size: 14px;
         }
-        .connection-status {
+        [data-page='device-list'] .gateway-item .item-content {
+            padding-left: 32px;
+            background-position: left;
+            background-repeat: no-repeat;
+            background-size: 24px;
+            background-image: url(img/icons/sb_03.png) !important;
+        }
+        [data-page='device-list'] .device-item .item-content {
+            padding-left: 32px;
+            padding-left: 32px;
+            background-position: left;
+            background-repeat: no-repeat;
+            background-size: 24px;
+            background-image: url(img/icons/sb_11.png) !important;
+        }
+        [data-page='device-list'] .connection-status {
             display: inline-block;
             width: 12px;
             height: 12px;
             border-radius: 12px;
             background: white;
         }
-        .connection-status[data-status=unknown] {
+        [data-page='device-list'] .connection-status[data-status=unknown] {
             background: gray;
         }
-        .connection-status[data-status=offline] {
+        [data-page='device-list'] .connection-status[data-status=offline] {
             background: red;
         }
-        .connection-status[data-status=online] {
+        [data-page='device-list'] .connection-status[data-status=online] {
             background: lightgreen;
         }
-        .connection-status[data-status=connecting] {
+        [data-page='device-list'] .connection-status[data-status=connecting] {
             background: orange;
         }
-        .connection-status[data-status=initializing] {
+        [data-page='device-list'] .connection-status[data-status=initializing] {
             background: lightblue;
         }
-        .device-item .mac {
-            color: gray;
-        }
-        .accessory {
+        [data-page='device-list'] .accessory {
             float: right;
             color: #88F;
         }
@@ -93,7 +118,7 @@
                     var dev = $db.devices[mac];
                     var info = {
                         mac: mac,
-                        name: dev.name,
+                        name: dev.name || mac,
                         status: 'offline',
                         '::delete': 'delete'
                     };
@@ -148,7 +173,6 @@
 
     <script id="gateway-item" type="text/template7"><li class="gateway-item swipeout">
         <div class="swipeout-content item-content">
-            <div class="item-media"><i class='icon f7-icons'>radio</i></div>
             <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span><span class='connection-status' data-status='{{status}}'></span></div>
         </div>
         <div class="swipeout-actions-right">
@@ -158,7 +182,6 @@
 
     <script id="device-item" type="text/template7"><li class="device-item swipeout" id='m{{mac}}'>
         <div class="swipeout-content item-content">
-            <div class="item-media"><i class='icon f7-icons'>social_instagram</i></div>
             <div class="item-inner"><span class='name'>{{name}}</span><span class='mac'>{{mac}}</span><span class='connection-status' data-status='{{status}}'></span></div>
         </div>
         <div class="swipeout-actions-right">

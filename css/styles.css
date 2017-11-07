@@ -381,3 +381,5 @@ html {
 [data-page='scenario'] .swipeout-actions-right .delete {
   background: red;
 }
+
+.image-template { opacity: 0; position: absolute; z-index: -1000; }

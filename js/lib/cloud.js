@@ -50,14 +50,16 @@ var $cloud = (function() {
         login: function(opt) {
             return init().then(function() { 
                 if (fake) {
-                    console.info(opt);
+                    // console.info(opt);
                     var db = window.localStorage;
                     var json = db.getItem('@user');
                     if (!json) {
+                        console.info('no record');
                         return Promise.reject(response(404, 'db not found'));
                     }
                     var user = JSON.parse(json);
                     if (user.email !== opt.email || user.password !== user.password) {
+                        console.info('not right');
                         return Promise.reject(response(404, 'invalid email or password'));
                     }
                     return Promise.resolve(response(200, null, user));
@@ -97,7 +99,7 @@ var $cloud = (function() {
                         // fake: true,
                         ip: [
                             ['http', '10.10.1.1'],
-                            // ['http', '127.0.0.1']
+                            ['http', '127.0.0.1']
                         ]
                     }));
                 }

@@ -2,11 +2,30 @@ $app.onPageInit('login', function (page) {
     var login = function(username, password) {
         return $cloud.login({email:username, password: password})
             .then(function(r) {
+                console.info(r);
                 if (r.status === 200) {
                     return r.data;
                 }
                 return Promise.reject(r);
             });
+    };
+
+    var checkGateway = function() {
+        if (Object.keys($db.gateways).length === 0) {
+            return Promise.resolve();
+        }
+        return new Promise(function(ok, ng) {
+            var t = setTimeout(function() {
+                ng($('#gateway-unavailable').innerHTML);
+            }, 10 * 1000);
+            $gateway.changed(function(gmac) {
+                if (!$gateway.online(gmac)) {
+                    return;
+                }
+                clearTimeout(t);
+                ok();
+            });
+        });
     };
 
     $('#sign-in').onclick = function() {
@@ -21,7 +40,8 @@ $app.onPageInit('login', function (page) {
                 });
             })
             .catch(function(e) {
-                $app.alert($('#error-' + e.status).innerHTML);
+                $app.hidePreloader();
+                $app.alert('', $('#error-' + e.status).innerHTML);
             });
     };
 
@@ -32,11 +52,20 @@ $app.onPageInit('login', function (page) {
     if (email) {
         $app.showPreloader($('#sync-db').innerHTML);
         $db.sync().then(function() {
-            $app.hidePreloader();
-            $app.startup();
+            $app.hidePreloader();                
+            $app.showPreloader($('#check-gateway').innerHTML);
+            return checkGateway();
+        })
+        .then(function() {
+            return $app.startup();
+        })
+        .then(function() {
+            $app.hidePreloader();                
         })
         .catch(function(e) {
-            console.info(e);
+            $app.hidePreloader();                
+            $app.alert('', e.toString());
+            // console.info(e);
         });
     }
 
