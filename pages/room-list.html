@@ -71,13 +71,19 @@
             });
             $('#room-list-inner').innerHTML = entries.join('');
         });
+        var opened = null;
         $page.onload(function() {
-            $('.room-list-item > .item-link', true).forEach(function(itm) {
-                itm.addEventListener('touchend', function(e) {
-                    // console.info(itm.getAttribute('data-link'));
-                    $mainView.router.loadPage(itm.getAttribute('data-link'));
+            $('.room-list-item', true).forEach(function(itm) {
+                var lnk = $(itm, '.item-link');
+                lnk.addEventListener('touchend', function(e) {
+                    if (opened === itm) { return; }
+                    setTimeout(function() {
+                        if (opened === itm) { return; }
+                        // console.info(itm.getAttribute('data-link'));
+                        $mainView.router.loadPage(lnk.getAttribute('data-link'));
+                    }, 0);
                 });
-            });
+            });            
         });
 
         $page.onload(function() {
@@ -101,6 +107,12 @@
             });
         });
         $page.onload(function() {
+            $$('.room-list-item.swipeout').on('swipeout:open', function (e) {
+                opened = e.srcElement;
+            }); 
+            $$('.room-list-item.swipeout').on('swipeout:close', function (e) {
+                opened = null;
+            }); 
             $$('.room-list-item.swipeout').on('swipeout:deleted', function (e) {
                 var rid = e.target.getAttribute('data-room-id');
                 $db.rooms.$update(function(tbl) {
@@ -221,6 +233,9 @@
 
  
     <style>
+    [data-page='room-list'] .list-block .item-inner:after {
+        display: none;
+    }
     [data-page='room-list'] .room-list-item {
         position: relative;
     }
@@ -230,7 +245,7 @@
         bottom: 14px;
         /*float: right;*/
         display: block;
-        z-index: 100;
+        /*z-index: 100;*/
     }
     [data-page='room-list'] .room-list-item .tool-icon span {
         margin-left: 12px;
@@ -383,7 +398,7 @@
     }   
     </style>
 
-    <script id="room-item" type="text/template7"><li class='room-list-item' data-room-id='{{rid}}'>
+    <script id="room-item" type="text/template7"><li class='room-list-item swipeout' data-room-id='{{rid}}'>
     <a href="#" data-link='pages/room-view.html?rid={{rid}}' class="item-link item-content">
         <div class="item-media"><img style='border-color:{{color}}' src="img/room-icons/{{icon}}" width="80"></div>
         <div class="item-inner">
@@ -399,6 +414,9 @@
             </span>
         </div>
     </a>
+    <div class="swipeout-actions-right">
+        <a href="#" class="swipeout-delete">{{delete}}</a>
+    </div>
     </li></script>
 
     <script id="room-saved-mode" type="text/template7"><!-- 

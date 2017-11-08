@@ -314,6 +314,13 @@
         height: 22px;
         margin: 16px 2px 8px 2px;
     }
+    #picker-lighting .predefined-temperatures span {
+        display: inline-block;
+        border-radius: 4px;
+        width: 80px;
+        height: 22px;
+        margin: 16px 2px 8px 2px;
+    }
     #picker-lighting #lighting-apply-all {
         color: #AAA;
         margin-left: 15px;
@@ -427,6 +434,9 @@ var roomViewToValue = function(type, dev) {
 
 $page.onload(function(e) {
     $('.predefined-colors span', true).forEach(function(el) {
+        el.style.backgroundColor = 'rgb(' + el.getAttribute('data-color') + ')';
+    });
+    $('.predefined-temperatures span', true).forEach(function(el) {
         el.style.backgroundColor = 'rgb(' + el.getAttribute('data-color') + ')';
     });
 });
@@ -817,9 +827,39 @@ $page.onload(function(e) {
             setColor(el.getAttribute('data-color').split(',').map(function(v) { return v * 1; }));
         };
     });
+    $('.predefined-temperatures span', true).forEach(function(el) {
+        console.info(el);
+        el.onclick = function() {
+            console.info(el.innerHTML)
+            setTemperature(el.innerHTML * 1);
+        };
+    });
 
 
+    var setTemperature = function(yv) {
+        var yvalue = (yv - 2700) / 23;
+        update(null, null, null, null, yvalue);
+        var img3 = $('#temperature-picker img');
+        var canvas3 = document.createElement('canvas');
+        canvas3.width = img3.offsetWidth;
+        canvas3.height = img3.offsetHeight;
+        var ctx3 = canvas3.getContext('2d');
+        ctx3.drawImage(img3, 0, 0, img3.offsetWidth, img3.offsetHeight);                    
+        var arc = (yvalue > 50) ? (-Math.PI + Math.PI * (yvalue - 50)/50) : (Math.PI * (yvalue/50));
+        var x = (img3.offsetWidth / 2) + Math.cos(arc) * (img3.offsetWidth / 2.5);
+        var y = (img3.offsetHeight / 2) - Math.sin(arc) * (img3.offsetHeight / 2.5) - 2;
+        if (yv === 5000) {
+            y += 2;
+        }
+        var pxl = ctx3.getImageData(x, y, 1, 1).data;
+        $('#current-temperature').style.backgroundColor = 'rgb(' + 
+            pxl[0] + ',' + 
+            pxl[1] + ',' + 
+            pxl[2] + ')';
+        $('#current-temperature').innerHTML = yv + 'K';
+    };
     var setColor = function(rgb) {
+        if (!rgb) { return; }
         update(null, Math.round(rgb[0] / 2.55), Math.round(rgb[1] / 2.55), Math.round(rgb[2] / 2.55), null);
         $('#current-color').style.backgroundColor = 'rgb(' + 
             rgb[0] + ',' + 
@@ -838,6 +878,7 @@ $page.onload(function(e) {
         var x = t.clientX - el.x;
         var y = t.clientY - (el.y - $('#picker-lighting .picker-modal-inner').offsetHeight / 2);
         var px = canvas.getContext('2d').getImageData(x, y, 1, 1).data;
+        if (px[3] !== 255) { return null; }
         return [px[0], px[1], px[2]];
     };
     $('#color-picker img').addEventListener('touchmove', function(e) {
@@ -848,7 +889,7 @@ $page.onload(function(e) {
         if (e.changedTouches.length !== 1) { return; }
         setColor(getColor(e, e.changedTouches[0]));
     });
-    $('#temperature-picker').addEventListener('touchmove', function(e) {
+    $('#temperature-picker img').addEventListener('touchmove', function(e) {
         if (e.touches.length !== 1) { return; }
         
         if (!ctx2) {
@@ -871,13 +912,14 @@ $page.onload(function(e) {
         var arc2 = Math.round(arc / (Math.PI * 2) * 100);
 
         var px = ctx2.getImageData(x, y, 1, 1).data;
+        if (px[3] !== 255) { return; }
         $('#current-temperature').style.backgroundColor = 'rgb(' + 
             [px[0],px[1],px[2]] + 
         ')';
         $('#current-temperature').innerHTML = (2700 + 23 * arc2) + 'K';
         update(null, null, null, null, arc2);
     });
-    $('#temperature-picker').addEventListener('touchend', function(e) {
+    $('#temperature-picker img').addEventListener('touchend', function(e) {
         if (e.changedTouches.length !== 1) { return; }
 
         if (!ctx2) {
@@ -900,6 +942,7 @@ $page.onload(function(e) {
         var arc2 = Math.round(arc / (Math.PI * 2) * 100);
 
         var px = ctx2.getImageData(x, y, 1, 1).data;
+        if (px[3] !== 255) { return; }
         $('#current-temperature').style.backgroundColor = 'rgb(' + 
             [px[0],px[1],px[2]] + 
         ')';
@@ -1168,6 +1211,12 @@ $page.onload(function(e) {
         <div class='list-block optional-picker' id='temperature-picker'>
             <div><img src='img/wy.png'></div>
             <div id='current-temperature' data-i18n-key='current'></div>
+            <div class='predefined-temperatures'>
+                <span data-color='253,232,46'>2700</span>
+                <span data-color='250,255,132'>3000</span>
+                <span data-color='221,225,165'>4000</span>
+                <span data-color='251,254,252'>5000</span>
+            </div>
         </div>
         <div class='list-block'>
             <div class='item-label' data-i18n-key='brightness'></div>
