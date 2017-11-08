@@ -8,11 +8,21 @@
             [205,109,239],
             [255,111,122],
         ];
-        var roomViewFormat = function(type, mac, wrgb) {
+        var roomViewFormat = function(type, mac, wrgb, dev) {
             switch (type) {
-                case 'light_wrgb': return { mac: mac, levelW: wrgb[0], levelR: wrgb[1], levelG: wrgb[2], levelB: wrgb[3] };
-                case 'light_wy': return { mac: mac, levelW: wrgb[0], levelY: wrgb[4] };
-                case 'ac_switch': return { mac: mac, enable: (wrgb[0] == 0) ? '0' : '1' };
+                case 'light_wrgb': return { mac: mac, 
+                    levelW: (wrgb[0] === '' && dev) ? dev.levelW : wrgb[0], 
+                    levelR: (wrgb[1] === '' && dev) ? dev.levelR : wrgb[1], 
+                    levelG: (wrgb[2] === '' && dev) ? dev.levelG : wrgb[2], 
+                    levelB: (wrgb[3] === '' && dev) ? dev.levelB : wrgb[3] 
+                };
+                case 'light_wy': return { mac: mac, 
+                    levelW: (wrgb[0] === '' && dev) ? dev.levelW : wrgb[0], 
+                    levelY: (wrgb[4] === '' && dev) ? dev.levelY : wrgb[4] 
+                };
+                case 'ac_switch': return { mac: mac, 
+                    enable: (wrgb[0] == 0) ? '0' : '1' 
+                };
             }
             return null;
         };
@@ -147,7 +157,8 @@
                     }
 
                     var dev = list[idx++];
-                    var payload = roomViewFormat(dev.type, dev.mac, wrgb);
+                    console.info(dev);
+                    var payload = roomViewFormat(dev.type, dev.mac, wrgb, dev);
                     if (!payload) {
                         return setTimeout(send, 0);
                     }
@@ -164,7 +175,7 @@
                 button.addEventListener('click', function() {
                     var value = button.getAttribute('data-value');
                     if (value) {
-                        return apply(value.split(',').map(function(v) { return v * 1; }))
+                        return apply(value.split(',').map(function(v) { return v; }))
                     }
                 });
             });
@@ -443,8 +454,8 @@
         <div><!-- 
      --><span class='saved-mode-group' id='custom-modes'></span><!-- 
      --><span class='saved-mode-group'><!-- 
-        --><a id='all-on' class='saved-mode' data-value='100,,,,'><i class="fa fa-power-off"></i><span data-i18n-key='all-on'></span></a><!-- 
-        --><a id='all-off' class='saved-mode' data-value='0,,,,'><i class="fa fa-power-off"></i><span data-i18n-key='all-off'></span></a>
+        --><a id='all-on' class='saved-mode' data-value='100,100,100,100,'><i class="fa fa-power-off"></i><span data-i18n-key='all-on'></span></a><!-- 
+        --><a id='all-off' class='saved-mode' data-value='0,0,0,0,'><i class="fa fa-power-off"></i><span data-i18n-key='all-off'></span></a>
         </span><!-- 
      --></div>
     </div></div>

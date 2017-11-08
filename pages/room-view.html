@@ -24,7 +24,7 @@
         background-size: 100%;
         background-position: center;
         box-shadow: 0px 0px 4px 4px rgba(91, 142, 236, 0.2);
-
+        background: #F8F8F8;
         /*box-shadow: 2px 2px 6px gray;*/
         /*background: none !important;*/
     }
@@ -405,7 +405,6 @@
 <script>
 
 var roomViewFormat = function(type, mac, wrgb, dev) {
-    console.info(arguments);
     switch (type) {
         case 'light_wrgb': return { mac: mac, 
             levelW: (wrgb[0] === '' && dev) ? dev.levelW : wrgb[0], 
@@ -830,14 +829,13 @@ $page.onload(function(e) {
     $('.predefined-temperatures span', true).forEach(function(el) {
         console.info(el);
         el.onclick = function() {
-            console.info(el.innerHTML)
             setTemperature(el.innerHTML * 1);
         };
     });
 
 
     var setTemperature = function(yv) {
-        var yvalue = (yv - 2700) / 23;
+        var yvalue = Math.round((yv - 2700) / 23);
         update(null, null, null, null, yvalue);
         var img3 = $('#temperature-picker img');
         var canvas3 = document.createElement('canvas');
@@ -962,13 +960,15 @@ $page.onload(function(e) {
         var w = $('#level-slider').value * 1;
         if (w === 0) {
             $('#level-slider').value = 100;
-            update(100, null, null, null, null);
+            update(100, 100, 100, 100, null);
             $('#lighting-toggle').setAttribute('data-can-off', true);
+            $('#current-color').style.backgroundColor = '#FFF';
         }
         else {
             $('#level-slider').value = 0;
-            update(0, null, null, null, null);
+            update(0, 0, 0, 0, null);
             $('#lighting-toggle').removeAttribute('data-can-off');
+            $('#current-color').style.backgroundColor = '#000';
         }
     });
     $('#lighting-apply-all').addEventListener('click', function() {
@@ -1352,8 +1352,8 @@ $page.onload(function(e) {
      --></span><!-- 
      --><span class='saved-mode-group' id='custom-modes'></span><!-- 
      --><span class='saved-mode-group'><!-- 
-        --><a id='all-on' class='saved-mode' data-value='100,,,,'><i class="fa fa-power-off"></i><span data-i18n-key='all-on'></span></a><!-- 
-        --><a id='all-off' class='saved-mode' data-value='0,,,,'><i class="fa fa-power-off"></i><span data-i18n-key='all-off'></span></a>
+        --><a id='all-on' class='saved-mode' data-value='100,100,100,100,'><i class="fa fa-power-off"></i><span data-i18n-key='all-on'></span></a><!-- 
+        --><a id='all-off' class='saved-mode' data-value='0,0,0,0,'><i class="fa fa-power-off"></i><span data-i18n-key='all-off'></span></a>
         </span><!-- 
      --></div>
     </div></div>
