@@ -1,4 +1,4 @@
-var $gateway = (function(fake) {
+var $gateway = (function() {
     var types = ['light_wrgb', 'ac_switch', 'light_wy'];
 
     var filter = null;
@@ -68,7 +68,88 @@ var $gateway = (function(fake) {
 
     var deviceStatus = (function() {
         var r = {};
-        var protocols = {
+        var protocols = { 
+            fake: (function() {
+                var fdata = {};
+                fdata.ac_switch = [
+                    { "dev": "1812", "mac": "7a624e1608001812", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "0", "": null },
+                    { "dev": "1813", "mac": "7a624e1608001813", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "0", "": null },
+                    { "dev": "1814", "mac": "7a624e1608001814", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
+                    { "dev": "1815", "mac": "7a624e1608001815", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
+                    { "dev": "1816", "mac": "7a624e1608001816", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
+                    { "dev": "1817", "mac": "7a624e1608001817", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "1", "": null },
+                    { "dev": "1833", "mac": "7a624e1608001833", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "enable": "0", "": null },
+                    null
+                ];
+                fdata.light_wrgb = [
+                    { "dev": "7788", "mac": "1122334455667788", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
+                    { "dev": "1612", "mac": "7a624e1608001612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
+                    { "dev": "1613", "mac": "7a624e1608001613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
+                    { "dev": "1617", "mac": "7a624e1608001617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
+                    { "dev": "2612", "mac": "7a624e1608002612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
+                    // { "dev": "2613", "mac": "7a624e1608002613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
+                    { "dev": "9613", "mac": "7a624e1608009613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
+                    { "dev": "2617", "mac": "7a624e1608002617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
+                    { "dev": "3612", "mac": "7a624e1608003612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
+                    { "dev": "3613", "mac": "7a624e1608003613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
+                    { "dev": "3617", "mac": "7a624e1608003617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
+                    { "dev": "4612", "mac": "7a624e1608004612", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelR": "0", "levelG": "100", "levelB": "0", "": null },
+                    { "dev": "4613", "mac": "7a624e1608004613", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "100", "levelR": "100", "levelG": "0", "levelB": "0", "": null },
+                    { "dev": "4617", "mac": "7a624e1608004617", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "80", "levelR": "0", "levelG": "0", "levelB": "100", "": null },
+                    null
+                ];
+
+                fdata.light_wy = [
+                    { "dev": "2012", "mac": "7a624e1608002012", "pan": "c000", "lt": "2016-10-28-10-58-58", "rr": "255", "rt": "255", "visibility": "1", "rtc": "2016-10-28-10-58-58", "levelW": "12", "levelY": "0", "": null },
+                    null
+                ];
+
+                var cl = function() {};
+                cl.prototype = {};
+                cl.prototype.init = function(mac, ip) {
+                    this.mac = mac;
+                    this.ip = ip;
+                    return Promise.resolve(this);
+                };
+                cl.prototype.add = function(mac) {
+                    return Promise.resolve();
+                };
+                cl.prototype.update = function() {
+                    var mac = this.mac;
+                    var ip = this.ip;
+                    return new Promise(function(ok) {
+                        setTimeout(function() {
+                            Object.keys(fdata).forEach(function(type) {
+                                fdata[type].forEach(function(dev) {
+                                    if (!dev) { return; }
+                                    dev.gateway = mac;
+                                    dev.type = type;
+                                    r[dev.mac] = dev;
+                                });
+                            });
+                            ok();
+                        }, 100);
+                    });
+                };
+                cl.prototype.set = function(mac, options) {
+                    var d = deviceStatus[mac];
+                    if (!d || !d.type) { return Promise.reject('device not found'); }
+
+                    return new Promise(function(ok) {
+                        setTimeout(function() {
+                            fdata[d.type].forEach(function(dev) {
+                                if (!dev || dev.mac !== mac) { return; }
+                                Object.keys(options).forEach(function(k) {
+                                    dev[k] = options[k];
+                                });
+                            });
+                            ok();
+                        }, 100);
+                    });
+                };
+
+                return function() { return new cl(); }; 
+            })(),
             http: (function() {
                 var cl = function() {};
                 cl.prototype = {};
@@ -76,10 +157,6 @@ var $gateway = (function(fake) {
                     // console.info('init ' + mac + ' ' + ip);
                     this.mac = mac;
                     this.ip = ip;
-                    if (fake) {
-                        return Promise.resolve(this);
-                    }
-
                     var self = this;
                     return $http.timeout(3000).get('http://' + ip + ':8080/info')
                         .then(function() {
@@ -155,7 +232,7 @@ var $gateway = (function(fake) {
                     }
 
                     var addr = entry[1];
-                    handler().init(mac, addr, r.data.fake)
+                    handler().init(mac, addr)
                         .then(function(inst) {
                             info.inf = inst;
                             info.status = 1;
@@ -270,8 +347,15 @@ var $gateway = (function(fake) {
         changed: function(cb) {
             stateCallbacks.push(cb);
         },
-        dump: function() {
-            console.info(deviceStatus);
+        dump: function(gateway) {
+            if (gateway) {
+                console.info(gatewayStatus);
+                return gatewayStatus;
+            }
+            else {
+                console.info(deviceStatus);
+                return deviceStatus;                
+            }
         },
         add: function(mac) {
             var macs = Object.keys(gatewayStatus).filter(function(mac) { 

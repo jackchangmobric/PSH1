@@ -118,3 +118,7 @@
 .button {
   color: rgb(91,142,236);
 }
+
+.range-slider input[type="range"]:after {
+  display: none;
+}

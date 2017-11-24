@@ -40,7 +40,7 @@ $page.onload(function(e) {
         $(e.container, '#mac').value = info.mac;
         $(e.container, '#status').innerHTML = $gateway.status(mac);
         $(e.container, '#ip').innerHTML = $gateway.ips(mac).map(function(ip) {
-            return '<div>' + ip[0] + ':' + ip[1] + '</div>';
+            return '<div>' + ip[0] + '://' + ip[1] + '</div>';
         }).join('');
     };
     $gateway.changed(function(m) {
@@ -110,11 +110,14 @@ $page.onload(function(e) {
     $('#import-from-gateway').onclick = function() {
         $app.showIndicator();
         $db.devices.$update(function(tbl) {
+            $('#db-log').innerHTML += 'import<br>';
             $gateway.each(function(type, mac, dev) {
                 if (tbl[mac]) { return; }
+                $('#db-log').innerHTML += (type + ',' + mac + dev.gateway + ',' + gmac + '<br>');
                 if (dev.gateway !== gmac) { return; }
                 tbl[mac] = {type:type,name:'',room:'',x:0,y:0};
             });
+            $('#db-log').innerHTML += 'import2<br>';
         }).$save().then(function() {
             $app.hideIndicator();
         });
@@ -206,4 +209,5 @@ $page.onload(function(e) {
             </p>
         </div>
     </div>
+    <div class='list-block' id='db-log'></div>
 </div>

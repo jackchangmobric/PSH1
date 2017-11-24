@@ -44,6 +44,7 @@
         top:50%;
         width:100%;
         transform:translate(0,-50%);
+        -webkit-transform:translate(0,-50%);
         text-align:center;
         font-size: 70%;
         text-shadow: 2px 2px 8px gray;
@@ -278,7 +279,9 @@
     }
     #picker-lighting input[type=range] {
         border-radius: 16px;
-        background: rgb(194,217,248);        
+        background-image: none;
+        background: rgb(194,217,248);
+        
     }
     #picker-lighting .picker-modal-inner {
         background-color: rgb(220,234,252);
@@ -288,6 +291,10 @@
         top: 50%;
         position: absolute;
         transform: translateY(-50%);
+        -webkit-transform: translateY(-50%);
+    }
+    #picker-lighting .picker-modal-inner .content-block {
+        position: relative;
     }
     #picker-lighting .item-label {
         color: #BBB;
@@ -370,7 +377,7 @@
         position: absolute;
         width: 80px;
         height: 80px;
-        top: 120px;
+        top: calc((100vw - 60px) * 0.35 - 40px);
         left: calc(50% - 40px);
         color: black;
         border-radius: 100px;
@@ -391,7 +398,7 @@
         position: absolute;
         width: 80px;
         height: 80px;
-        top: 120px;
+        top: calc((100vw - 60px) * 0.35 - 40px);
         left: calc(50% - 40px);
         color: black;
         border-radius: 100px;

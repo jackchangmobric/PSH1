@@ -102,6 +102,7 @@ $app.startup = function() {
         var item = $db.pendingItems[id];
         var key = item.key;
         var func = $startupItem[key];
+        alert(key, func);
         if (!func) {
             return Promise.resolve();
         }

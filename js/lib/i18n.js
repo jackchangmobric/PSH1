@@ -72,7 +72,7 @@ var $templates = (function() {
             ctx[k] = lang[k];
         });
         Object.keys(context).forEach(function(k) {
-            if (k.startsWith('::')) {
+            if (k[0] === k[1] === ':') {
                 ctx[k.substring(2)] = lang['_lang_' + context[k]];
             }
             else {

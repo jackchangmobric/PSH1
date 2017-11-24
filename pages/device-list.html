@@ -78,8 +78,12 @@
             });
         });
         $page.onload(function() {
+            // $('#db-log').innerHTML += 'pre-reload<br>';
             var reload = function() {
                 var entries = [];
+                // $('#db-log').innerHTML += 'pre-reload1<br>';
+                try {
+
                 Object.keys($db.gateways).forEach(function(mac) {
                     var gateway = $db.gateways[mac];
                     var info = {
@@ -90,7 +94,13 @@
                     };
                     entries.push($templates('#gateway-item', info));
                 });
+                } catch (e) {
+                // $('#db-log').innerHTML += (e + '<br>');
+                }
+
+                // $('#db-log').innerHTML += 'pre-reload2<br>';
                 $('#gateway-list-inner').innerHTML = entries.join('');
+                // $('#db-log').innerHTML += 'pre-reload3<br>';
                 $page.onload(function() {
                     $('#gateway-list-inner .gateway-item .item-content', true).forEach(function(i) {
                         var mac = $(i, '.mac').innerHTML;
@@ -99,11 +109,14 @@
                         };
                     });
                 });
+                // $('#db-log').innerHTML += 'pre-reload4<br>';
             };
             $gateway.changed(function() {
+                // $('#db-log').innerHTML += 'changed<br>';
                 reload();
             });
             reload();
+            // $('#db-log').innerHTML += 'reload<br>';
 
             $$('.gateway-item.swipeout').on('swipeout:deleted', function(e) {
                 $db.gateways.$update(function(tbl) {
@@ -209,6 +222,14 @@
         <span class='accessory' id='add-new-device'><i class='icon f7-icons'>add</i></span>
     </div>
     <div class="list-block"><ul id='device-list-inner'></ul></div>
+    <div class='list-block' id='db-log'></div>
 </div>
+
+<script>
+    // $('#db-log').innerHTML = JSON.stringify(window.localStorage);
+    // setInterval(function() {
+        // $('#db-log').innerHTML = JSON.stringify($gateway.dump(1));
+    // }, 1000);
+</script>
 
 </div>

@@ -96,10 +96,10 @@ var $cloud = (function() {
             return init().then(function() { 
                 if (fake) {
                     return Promise.resolve(response(200, null, {
-                        // fake: true,
                         ip: [
-                            ['http', '10.10.1.1'],
-                            ['http', '127.0.0.1']
+                            ['http', '10.10.1.1']
+                            // ['http', '127.0.0.1']
+                            // ['fake', '127.0.0.1']
                         ]
                     }));
                 }
