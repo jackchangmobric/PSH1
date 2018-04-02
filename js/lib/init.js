@@ -221,9 +221,9 @@ var $db = (function() {
                 }, 0);
             });
         },
-        reset: function() {
+        reset: function(all) {
             Object.keys(db)
-                .filter(function(n) { return n[0] !== '@'; })
+                .filter(function(n) { return n[0] !== '@' || all; })
                 .forEach(function(n) {
                     db.removeItem(n);
                 });

@@ -179,7 +179,7 @@ var $gateway = (function() {
                     return Promise.all(types.map(function(type) {
                         var url = 'http://' + ip + ':8080/' + type + '.get_dev_list';
                         return $http.get(url, {d:Date.now()}).then(function(resp) {
-                            if (resp.success !== 'true') { return; }
+                            if ((resp.success + '') != 'true') { return; }
 
                             resp.objects.forEach(function(dev) {
                                 if (!dev) { return; }
@@ -206,7 +206,7 @@ var $gateway = (function() {
 
                     var ip = this.ip
                     var url = 'http://' + ip + ':8080/' + method;
-                    console.info(options);
+                    // console.info(options);
                     return $http.get(url, options);
                 };
 
@@ -289,6 +289,7 @@ var $gateway = (function() {
             }))
             .then(function() {
                 var n = 0;
+                console.info('Device count = ' + Object.keys(n).length);
                 Object.keys(r).forEach(function(mac) {
                     var dev = $db.devices[mac];
                     if (!dev) {

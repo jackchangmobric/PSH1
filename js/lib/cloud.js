@@ -92,12 +92,12 @@ var $cloud = (function() {
                 return $http.put(m('user.pushdb'), opt, JSON.stringify(data)); 
             });
         },
-        query: function(mac) {
+        query: function(mac) {            
             return init().then(function() { 
                 if (fake) {
                     return Promise.resolve(response(200, null, {
                         ip: [
-                            ['http', '10.10.1.1']
+                            ['http', '52.191.194.212']
                             // ['http', '127.0.0.1']
                             // ['fake', '127.0.0.1']
                         ]
