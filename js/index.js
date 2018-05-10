@@ -16,7 +16,7 @@ var app = (function() {
             this.connect();
         },
         connect: function() {
-            ws = new WebSocket('ws://127.0.0.1:9000');
+            ws = new WebSocket('ws://172.20.10.4:9000');
             ws.open = function() {
                 console.info('connected')
             };
