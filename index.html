@@ -1,205 +1,415 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta http-equiv='Content-Security-Policy' content="default-src * data: gap: https: ws: 'unsafe-eval' 'unsafe-inline'">
-
-
-    <meta charset='utf-8'>
-    <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui'>
-    <meta name='apple-mobile-web-app-capable' content='yes'>
-    <meta name='apple-mobile-web-app-status-bar-style' content='black'>
-    <meta name='format-detection' content='telephone=no'>
-    <meta name='msapplication-tap-highlight' content='no'>
-
-    <title></title>
-
-    <!-- This template defaults to the iOS CSS theme. To support both iOS and material design themes, see the Framework7 Tutorial at the link below:
-    http://www.idangero.us/framework7/tutorials/maintain-both-ios-and-material-themes-in-single-app.html
--->
-
-<link rel='stylesheet' href='lib/framework7/css/framework7.ios.css'>
-<link rel='stylesheet' href='lib/framework7/css/framework7.ios.colors.css'>
-<link rel='stylesheet' href='css/patch.css'>
-<link rel='stylesheet' href='css/font-awesome.min.css'>
-<link rel='stylesheet' href='css/styles.css'>
+    <meta charset="utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="msapplication-tap-highlight" content="no" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+    <!-- This is a wide open CSP declaration. To lock this down for production, see below. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline'; media-src *" />
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <link rel="stylesheet" type="text/css" href="css/index.css" />
+    <title>Where is my cow?</title>
 </head>
 
-<style>
-    [data-page='login'] .content-block {
-        height: 100%;
-        position: relative;
-    }
-/*    #company-logo {
-        width: 100%;
-        height: 200px;
-        background-image: url(img/company.png);
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: 100% auto;
-    }*/
+<body>
+    <style type="text/css">
+        .sheet h1 {
+            text-align: left;
+            color: #FFF !important;
+            margin: 24px 0px 48px 0px;
+        }
+        .sheet h1:after {
+            float: right;
+            content: '>';
+            color: darkorange;
+            font-size: 24px;
+        }
+        .sheet fieldset {
+            padding: 0px;
+            margin: 0px 0px 24px 0px;
+            border: none;
+            font-size: 16px;
+        }
+        .sheet fieldset legend {
+            padding: 0px;
+            margin: 0px;
+            margin-bottom: 8px;
+            color: darkorange;
+        }
+        .sheet fieldset label {
+            border: none;
+            outline: none;
+            margin-bottom: 8px;
+            background: none;
+            font-weight: lighter;
+            color: #BBB;
+            width: 100px;
+            display: inline-block;
+        }
+        .sheet fieldset input {
+            border: none;
+            outline: none;
+            margin-bottom: 4px;
+            background: none;
+            width: calc(100% - 108px);
+            font-size: 16px;
+        }
+        .sheet fieldset input:focus {
+            background-color: #444;
+        }
+        .sheet fieldset input[type=button] {
+            border: none;
+            outline: none;
+            padding: 0px;
+            margin-bottom: 4px;
+            width: 100%;
+            background: none;
+            display: block;
+            color: lightblue;
+            text-align: left;
+            font-size: 14px;
+            font-style: italic;
+        }
 
-    .page[data-page='login'] {
-        background-image: url(img/login-background.png);
-        background-position: top;
-        background-repeat: no-repeat;
-        background-size: 100% auto;
-        background-color: white !important;
-    }
-    .page[data-page='login'] #login-content {
-        position: absolute;
-        top: calc(65vw);
-        width: calc(100% - 32px);
-        height: calc(100vh - 65vw - 35px);
-        min-height: 300px;
-    }
-    .page[data-page='login'] #login-content .item-content {
-        margin: 32px 40px 0px 40px;
-        /*margin-top: calc((100vh - 110vw - 120px) / 6);*/
-        margin-top: calc((100vh - 55vh - 120px) / 6);
-        border-bottom: thin solid #CCC;
-        padding-left: 0px;
-    }
+        .sheet {
+            position: absolute;
+            top: 48px;
+            width: 250px;
+            right: -300px;
+            height: calc(100% - 48px);
+            -webkit-transition: right 0.6s;
+            transition: right 0.6s;
+            background-color: rgba(0,0,0,0.8);
+            padding: 8px;
+        }
+        .sheet[data-active='true'] {
+            right: 0px;
+        }
+        .sheet * {
+            color: white;
+        }
+        #toolbar {
+            position: absolute;
+            width: calc(100% - 24px);
+            top: 0px;
+            left: 0px;
+            padding: 8px 12px;
+            background-color: rgba(40,40,40,0.6);
+            /*background-image: url('img/banner.png');*/
+            background-size: auto calc(100% - 16px);
+            background-position: 8px center;
+            background-repeat: no-repeat;
+            white-space: nowrap;
+        }
+        #toolbar input {
+            font-size: 18px;
+            border: none;
+            outline: none;
+            line-height: 24px;
+            padding: 4px 8px;
+            margin: 0px;
+            background: none;
+        }
+        #map {
+            position: absolute;
+            width: 100%;
+            height: calc(100% + 32px);
+        }
+        #geofence-canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            -webkit-transition: background-color 0.6s;
+            transition: background-color 0.6s;
+        }
+        #geofence-canvas > button {
+            border: none;
+            position: absolute;
+            bottom: 32px;
+            display: inline-block;
+            padding: 8px 0px;
+            margin: 0px 0px;
+            background-color: gray;
+            width: calc(100% - 32px);
+            left: 16px;
+            height: 36px;
+            font-size: 20px;
+            color: white;
+            border-radius: 4px;
+            outline: none;
+            opacity: 0;
+            pointer-events: none;
+            -webkit-transition: opacity 0.6s;
+            transition: opacity 0.6s;
+        }
+        #geofence-canvas > button#cancel-new-fence {
+            bottom: 80px;
+        }
+        #geofence-canvas > button#create-new-fence {
+            background-color: yellowgreen;
+        }
 
-    .page[data-page='login'] #login-content .item-content .item-inner {
-        margin-right: 0px;
-    }
+        #geofence-canvas[data-active] {
+            pointer-events: all;
+            background-color: rgba(150,150,150,0.7);
+            z-index: 1000;
+        }
+        #geofence-canvas[data-active] > button {
+            opacity: 1;
+            pointer-events: all;
+        }
 
-    .page[data-page='login'] #login-content .item-content .label {
-        color: #AAA;
-        padding-left: 32px;
-        background-repeat: no-repeat;
-        background-position: left middle;
-        background-size: 24px;
-    }
+        #settings[data-active] {
+            pointer-events: all;
+            opacity: 1;
+        }
+        #settings {
+            float: right;
+            width: 32px;
+            height: 32px;
+            margin-left: 18px !important;
+            background-image: url('img/settings.png') !important;
+            background-size: 24px !important;
+            background-position: center center !important;
+            background-repeat: no-repeat !important;
+            pointer-events: none;
+            opacity: 0;
+            -webkit-transition: opacity 0.6s;
+            transition: opacity 0.6s;
+        }
+        #add-geofence[data-active] {
+            pointer-events: all;
+            opacity: 1;
+        }
+        #add-geofence {
+            float: right;
+            width: 32px;
+            height: 32px;
+            margin-left: 18px !important;
+            background-image: url('img/add-geofence.png') !important;
+            background-size: 24px !important;
+            background-position: center center !important;
+            background-repeat: no-repeat !important;            
+            pointer-events: none;
+            opacity: 0;
+            -webkit-transition: opacity 0.6s;
+            transition: opacity 0.6s;
+        }
+        #show-list[data-active] {
+            pointer-events: all;
+            opacity: 1;
+        }
+        #show-list {
+            float: right;
+            width: 32px;
+            height: 32px;
+            margin-left: 18px !important;
+            background-image: url('img/show-list.png') !important;
+            background-size: auto 24px !important;
+            background-position: center center !important;
+            background-repeat: no-repeat !important;            
+            pointer-events: none;
+            opacity: 0;
+            -webkit-transition: opacity 0.6s;
+            transition: opacity 0.6s;
+        }
+        #search {
+            border-radius: 32px;
+            background-color: transparent; !important;
+            padding-left: 40px !important;
+            background-image: url('img/search-inv.png') !important;
+            background-size: auto 20px !important;
+            background-position: 10px 6px !important;
+            background-repeat: no-repeat !important;
+            -webkit-transition: width 0.6s;
+            transition: width 0.6s;
+            color: white;
+            width: 60px;
+        }
+        #search:focus {
+            background-color: rgba(255,255,255,0.9) !important;
+            background-image: url('img/search.png') !important;            
+            color: black;
+            width: calc(100% - 48px);
+        }
 
-    .page[data-page='login'] #login-content .item-content .label[data-i18n-key='login-email'] {
-        background-image: url(img/icons/dl_07.png);
-    }
-    .page[data-page='login'] #login-content .item-content .label[data-i18n-key='login-password'] {
-        background-image: url(img/icons/dl_11.png);
-    }
+        #footbar {
+            position: absolute;
+            width: calc(100% - 24px);
+            bottom: 0px;
+            padding: 8px 12px;
+            background-color: rgba(255,255,255,0.2);
+        }
+        #footbar .legend {
+            display: inline-block;
+            font-size: 16px;
+            opacity: 0.4;
+            width: 20%;
+        }
+        #footbar .legend[data-active] {
+            opacity: 1;
+            font-weight: bold;
+        }
+        #footbar .legend[data-always-on] {
+            opacity: 1;
+            font-weight: bold;
+        }
+        #footbar .legend:before {
+            content: '';
+            vertical-align: bottom;
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            margin: 2px 4px 2px 0px;
+        }
+        #footbar .legend#all:before {
+            background-color: dimgray;
+        }
+        #footbar .legend#critical:before {
+            background-color: crimson;
+        }
+        #footbar .legend#warning:before {
+            background-color: orange;
+        }
+        #footbar .legend#normal:before {
+            background-color: yellowgreen;
+        }
+        #footbar .legend#escaped:before {
+            background-color: purple;
+        }
 
-    .page[data-page='login'] #login-content .item-content input {
-        text-align: right;
-    }
+        #_device-detail input[data-state="critical"] {
+            color: red;
+        }
+        #_device-detail input[data-state="warning"] {
+            color: orange;
+        }
 
-/*    .page[data-page='login'] .list-block ul:before,
-    .page[data-page='login'] .list-block ul:after {
-        background: none;
-    }
-*/
-    .page[data-page='login'] #sign-in {
-        margin: 60px 60px 30px 60px;
-        margin-top: calc((100vh - 55vh - 120px) / 4);
-        height: 30px;
-        border: none;
-        border-radius: 30px;
-        padding: 10px 0px;
-        font-size: 22px;
-        height: auto;
-        background-color: rgb(91,142,236);
-        color: white;
-    }
-    .page[data-page='login'] #forgot-password {
-        color: gray;
-        display: block;
-        text-align: center;
-        margin-bottom: 48px;
-    }
-    .page[data-page='login'] #sign-up {
-        display: block;
-        text-align: center;
-        position: absolute;
-        left: 0px;
-        right: 0px;
-        bottom: 16px;
-        /*float: right;*/
-    }
+        #auto-complete {
+            position: absolute;
+            top: 48px;
+            left: 0px;
+            right: 0px;
+            bottom: 0px;
+            z-index: 1000;
+            pointer-events: none;
+            font-size: 24px;
+            opacity: 0;
+            -webkit-transition: opacity 0.6s;
+            transition: opacity 0.6s;
+            color: white;
+        }
+        #auto-complete[data-active=true] {
+            pointer-events: all;
+            opacity: 1;
+        }
+        #auto-complete > * {
+            padding: 8px 52px;
+            background-color: rgba(40,40,40,0.6);
+            border-top: 1px solid gray;
+        }
+        #clear-search {
+            border-radius: 18px;
+            height: 18px;
+            width: 18px;
+            margin-left: -28px !important;
+            background-color: darkgray !important;
+            opacity: 0;
+            /*-webkit-transition: opacity 0.6s;*/
+            /*transition: opacity 0.6s;*/
+            pointer-events: none;
+        }
+        #clear-search[data-active=true] {
+            pointer-events: all;
+            opacity: 1 !important;
+        }
 
-</style>
+        #buzz {
+            width: 100%;
+            font-size: 24px;
+            background-color: darkred;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            outline: none;
+        }
+    </style>
 
-<body class='theme-cyan'>
-    <div class='image-template'>
-        <img id='image-light_wrgb' src='img/icons/fmdg_10.png'>
-        <img id='image-light_wy' src='img/icons/fmdg_12.png'>
-        <img id='image-ac_switch' src='img/icons/fmdg_16.png'>
+    <div id='map'></div>
+    <div id='geofence-canvas'><button id='cancel-new-fence'>Cancel</button><button id='create-new-fence'>Done</button></div>
+    <div id='auto-complete'></div>
+    <div id='toolbar'><!-- 
+     --><input type='button' data-active='true' id='settings' data-toggle-target='_settings'/><!-- 
+     --><input type='button' data-active='true' id='show-list'/><!-- 
+     --><input type='button' data-active='true' id='add-geofence'/><!-- 
+     --><input type='text' id='search'/><!-- 
+     --><input type='button' id='clear-search'/>
     </div>
-    <div class='statusbar-overlay'></div>
-    <div id='app-space' class='views'>
-        <div id='log-item'></div>
-        <div class='view view-main'>
-            <div class='pages'><div data-page='login' class='page'>
-                <div class='strings'>
-                    <span data-i18n-key='error-401'></span>
-                    <span data-i18n-key='error-402'></span>
-                    <span data-i18n-key='error-403'></span>
-                    <span data-i18n-key='error-404'></span>
-                    <span data-i18n-key='error-405'></span>
-                    <span data-i18n-key='authenticating'></span>
-                    <span data-i18n-key='sync-db'></span>
-                    <span data-i18n-key='check-gateway'></span>
-                    <span data-i18n-key='gateway-unavailable'></span>
-                </div>
-                <div class="content-block"><div id='login-content'>
-                    <!-- <div id='company-logo'></div> -->
-                    <!-- <div class='login-screen-title' data-i18n-key='page-title'></div> -->
-                    <form>
-                        <div class='list-block'>
-                            <ul>
-                                <li class='item-content'>
-                                    <div class='item-inner'>
-                                        <div class='item-title label' data-i18n-key='login-email'></div>
-                                        <div class='item-input'>
-                                            <input type='text' id='username' name='username' data-i18n-key='login-email-ph:placeholder' placeholder=''>
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class='item-content'>
-                                    <div class='item-inner'>
-                                        <div class='item-title label' data-i18n-key='login-password'></div>
-                                        <div class='item-input'>
-                                            <input type='password' id='password' name='password' data-i18n-key='login-password-ph:placeholder' placeholder=''>
-                                        </div>
-                                    </div>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class='list-block'>
-                            <ul>
-                                <li><a id='sign-in' href='#' class='button' data-i18n-key='login-title'></a></li>
-                            </ul>
-                        </div>
-                        <a id='forgot-password' href='#' data-i18n-key='forgot-password'></a>
-                        <a id='sign-up' href='pages/sign-up.html' data-i18n-key='sign-up'></a>
-                    </form>
-                </div></div>
-            </div></div>
-        </div>
+ 
+    <div id='footbar'><!-- 
+     --><div class='group-button' id='state-filter'><!-- 
+         --><span class='legend button' id='all' data-display-mask='15'>30</span><!-- 
+         --><span class='legend button' id='critical' data-display-mask='4'>1</span><!-- 
+         --><span class='legend button' id='warning' data-display-mask='2'>12</span><!-- 
+         --><span class='legend button' id='normal' data-display-mask='1'>17</span><!-- 
+         --><span class='legend button' id='escaped' data-always-on></span><!-- 
+     --></div><!-- 
+ --></div>
+
+    <div class='sheet' id='_device-detail'>
+        <h1>Device</h1>
+        <fieldset><!-- 
+         --><legend>Information</legend><!-- 
+         --><label>IMSI</label><input name='nid'><!-- 
+     --></fieldset>
+        <fieldset><!-- 
+         --><legend>Location</legend><!-- 
+         --><label>Longitude</label><input name='lng'><!-- 
+         --><label>Latitude</label><input name='lat'><!-- 
+     --></fieldset>
+        <fieldset><!-- 
+         --><legend>Status</legend><!-- 
+         --><label>Breath rate</label><input name='br'><!-- 
+         --><label>Heart rate</label><input name='hr'><!-- 
+     --></fieldset>
+
+        <button id='buzz'>BUZZ</button>
+     </div>
+    <div class='sheet' id='_settings'>
+        <h1>Settings</h1>
+        <fieldset data-setting='homeLocation'><!-- 
+         --><legend>Home</legend><!-- 
+         --><label>Latitude</label><input id='lat' value=131><!-- 
+         --><label>Longitude</label><input id='lng' value=25><!-- 
+         --><input type='button' id='use-current-location' value='Use current location'></input><!-- 
+     --></fieldset>
+
+        <fieldset data-setting='alarmThreshold'><!-- 
+         --><legend>Critical Alarm</legend><!-- 
+         --><label>Heart rate</label><input id='hr-critical' value=90><!-- 
+         --><label>Breath rate</label><input id='br-critical' value=60><!-- 
+         --><input type='button' id='use-default-threshold' value='Use default threshold'></input><!-- 
+     --></fieldset>
+
+        <fieldset data-setting='alarmThreshold'><!-- 
+         --><legend>Warning Alarm</legend><!-- 
+         --><label>Heart rate</label><input id='hr-warning' value=75><!-- 
+         --><label>Breath rate</label><input id='br-warning' value=45><!-- 
+         --><input type='button' id='use-default-threshold' value='Use default threshold'></input><!-- 
+     --></fieldset>
     </div>
-    <div id='splash-image'></div>
+
+
+    <script src='cordova.js'></script>
+    <script src='js/utility.js'></script>
+
+    <script src='js/index.js'></script>
+    <script src='js/marker-cluster.js'></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7ooPA5uPKTfvoQXYINNv0u8ybaL_L2w8&callback=onMapReady"></script>
 </body>
-
-<script type='text/javascript' src='cordova.js'></script>
-<script type='text/javascript' src='lib/framework7/js/framework7.js'></script>
-<script type='text/javascript' src='js/config.js'></script>
-<script type='text/javascript' src='js/lib/startup-item.js'></script>
-<script type='text/javascript' src='js/lib/util.js'></script>
-<script type='text/javascript' src='js/lib/http.js'></script>
-<!-- <script type='text/javascript' src='js/lib/color-wheel.js'></script> -->
-<script type='text/javascript' src='js/lib/init.js'></script>
-<script type='text/javascript' src='js/lib/gateway.js'></script>
-<script type='text/javascript' src='js/lib/cloud.js'></script>
-<script type='text/javascript' src='js/lib/i18n.js'></script>
-<script type='text/javascript' src='js/login-screen.js'></script>
-<!-- <script type='text/javascript' src='js/lib/jscolor.min.js'></script> -->
-<!-- <script type='text/javascript' src='js/lib/toolbar-links.js'></script> -->
-<!-- <script type='text/javascript' src='js/lib/side-panel.js'></script> -->
-
-<!-- <script type='text/javascript' src='js/home.js'></script> -->
-<!-- <script type='text/javascript' src='js/floorplan.js'></script> -->
-<!-- <script type='text/javascript' src='js/scenario.js'></script> -->
-<!-- <script type='text/javascript' src='js/settings.js'></script> -->
-<!-- <script type='text/javascript' src='js/new-room.js'></script> -->
-<!-- <script type='text/javascript' src='js/new-scenario.js'></script> -->
 
 </html>
