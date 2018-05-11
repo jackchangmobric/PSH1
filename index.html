@@ -96,7 +96,7 @@
             top: 0px;
             left: 0px;
             padding: 8px 12px;
-            background-color: rgba(40,40,40,0.6);
+            background-color: rgba(201,90,39);
             /*background-image: url('img/banner.png');*/
             background-size: auto calc(100% - 16px);
             background-position: 8px center;
@@ -149,7 +149,7 @@
             bottom: 80px;
         }
         #geofence-canvas > button#create-new-fence {
-            background-color: yellowgreen;
+            background-color: rgba(201,90,39);
         }
 
         #geofence-canvas[data-active] {
@@ -370,6 +370,7 @@
          --><legend>Location</legend><!-- 
          --><label>Longitude</label><input name='lng'><!-- 
          --><label>Latitude</label><input name='lat'><!-- 
+         --><label>Last Report</label><input name='lastReportTime'><!-- 
      --></fieldset>
         <fieldset><!-- 
          --><legend>Status</legend><!-- 
@@ -401,6 +402,11 @@
          --><label>Breath rate</label><input id='br-warning' value=45><!-- 
          --><input type='button' id='use-default-threshold' value='Use default threshold'></input><!-- 
      --></fieldset>
+
+        <fieldset data-setting='behavior'><!-- 
+         --><legend>Behavior</legend><!-- 
+         --><label>Auto follow</label><input id='autoFollow' type=checkbox><!-- 
+     --></fieldset>     
     </div>
 
 

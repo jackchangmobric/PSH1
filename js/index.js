@@ -16,12 +16,11 @@ var app = (function() {
             this.connect();
         },
         connect: function() {
-            ws = new WebSocket('ws://172.20.10.4:9000');
+            ws = new WebSocket('ws://52.191.194.212');
             ws.open = function() {
                 console.info('connected')
             };
             ws.onmessage = function(evt) {
-                console.info(evt);
                 var pt = JSON.parse(evt.data);
                 if (!pt.nid) {
                     return;
@@ -41,11 +40,28 @@ var app = (function() {
                     pt.state = 1;
                     pt.stateS = 'normal';
                 }
+                pt.lastReportTime = new Date(pt.lastReport);
 
+                pt.lat *= 1;
+                pt.lng *= 1;
+
+                if (bounds) {
+                    var north = Math.max(bounds.pt1.lat, bounds.pt2.lat);
+                    var south = Math.min(bounds.pt1.lat, bounds.pt2.lat);
+                    var east = Math.max(bounds.pt1.lng, bounds.pt2.lng);
+                    var west = Math.min(bounds.pt1.lng, bounds.pt2.lng);
+                    if (pt.lng < west || pt.lng > east || pt.lat < south || pt.lat > north) {
+                        pt.escaped = 1;
+                    }
+                    else {
+                        pt.escaped = 0;
+                    }
+                }
                 if ($('#_device-detail').getAttribute('data-nid') === pt.nid) {
                     $('#_device-detail input', true).forEach(function(i) {
                         if (!i.name) { return; }
-                        i.value = pt[i.name];
+                        console.info(i.name);
+                        i.value = pt[i.name].toString();
                     });
                     if (pt.br > critical[0]) {
                         $('#_device-detail input[name=br]').setAttribute('data-state', 'critical');
@@ -67,25 +83,9 @@ var app = (function() {
                     }
                 }
 
-                pt.lat *= 1;
-                pt.lng *= 1;
-
-                if (bounds) {
-                    var north = Math.max(bounds.pt1.lat, bounds.pt2.lat);
-                    var south = Math.min(bounds.pt1.lat, bounds.pt2.lat);
-                    var east = Math.max(bounds.pt1.lng, bounds.pt2.lng);
-                    var west = Math.min(bounds.pt1.lng, bounds.pt2.lng);
-                    if (pt.lng < west || pt.lng > east || pt.lat < south || pt.lat > north) {
-                        pt.escaped = 1;
-                    }
-                    else {
-                        pt.escaped = 0;
-                    }
-                }
-
 
                 points[pt.nid] = pt;
-                if (pt.nid === focus) {
+                if (pt.nid === focus && $('#autoFollow').checked) {
                     map.setCenter({
                         lat: pt.lat,
                         lng: pt.lng
@@ -391,7 +391,7 @@ var app = (function() {
                     var pt = points[this.label];
                     $('#_device-detail input', true).forEach(function(i) {
                         if (!i.name) { return; }
-                        i.value = pt[i.name];
+                        i.value = pt[i.name].toString();
                     });
                     $('#_device-detail').setAttribute('data-nid', this.label);
                     $activate($('#_device-detail'), true);
