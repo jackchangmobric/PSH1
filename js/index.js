@@ -45,7 +45,7 @@ var app = (function() {
                 pt.lat *= 1;
                 pt.lng *= 1;
 
-                if (bounds) {
+                if (bounds && bounds.pt1) {
                     var north = Math.max(bounds.pt1.lat, bounds.pt2.lat);
                     var south = Math.min(bounds.pt1.lat, bounds.pt2.lat);
                     var east = Math.max(bounds.pt1.lng, bounds.pt2.lng);
@@ -59,9 +59,14 @@ var app = (function() {
                 }
                 if ($('#_device-detail').getAttribute('data-nid') === pt.nid) {
                     $('#_device-detail input', true).forEach(function(i) {
+                        try {
                         if (!i.name) { return; }
                         console.info(i.name);
-                        i.value = pt[i.name].toString();
+                        i.value = (pt[i.name] || '').toString();
+                        }
+                        catch(e) {
+                            $('#search').value = e;
+                        }
                     });
                     if (pt.br > critical[0]) {
                         $('#_device-detail input[name=br]').setAttribute('data-state', 'critical');
@@ -391,7 +396,7 @@ var app = (function() {
                     var pt = points[this.label];
                     $('#_device-detail input', true).forEach(function(i) {
                         if (!i.name) { return; }
-                        i.value = pt[i.name].toString();
+                        i.value = (pt[i.name] || '').toString();
                     });
                     $('#_device-detail').setAttribute('data-nid', this.label);
                     $activate($('#_device-detail'), true);
