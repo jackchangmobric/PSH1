@@ -100,7 +100,7 @@ var app = (function() {
             };
         },
         initViews: function() {
-            document.body.requestFullscreen();
+            // document.body.requestFullscreen();
             // init sheet close
             $('.sheet > h1', true).forEach(function(a) {
                 a.addEventListener('click', function() { $activate(a.parentNode, false); });
