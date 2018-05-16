@@ -20,12 +20,17 @@
             text-align: left;
             color: #FFF !important;
             margin: 24px 0px 48px 0px;
+            line-height: 30px;
         }
         .sheet h1:after {
             float: right;
             content: '>';
             color: darkorange;
             font-size: 24px;
+        }
+        .sheet div {
+            height: calc(100% - 118px);
+            overflow-y: auto;
         }
         .sheet fieldset {
             padding: 0px;
@@ -366,6 +371,7 @@
 
     <div class='sheet' id='_device-detail'>
         <h1>Device</h1>
+        <div>
         <fieldset><!-- 
          --><legend>Information</legend><!-- 
          --><label>IMSI</label><input name='nid'><!-- 
@@ -383,9 +389,11 @@
      --></fieldset>
 
         <button id='buzz'>BUZZ</button>
+        </div>
      </div>
     <div class='sheet' id='_settings'>
         <h1>Settings</h1>
+        <div>
         <fieldset data-setting='homeLocation'><!-- 
          --><legend>Home</legend><!-- 
          --><label>Latitude</label><input id='lat' value=131><!-- 
@@ -410,7 +418,8 @@
         <fieldset data-setting='behavior'><!-- 
          --><legend>Behavior</legend><!-- 
          --><label>Auto follow</label><input id='autoFollow' type=checkbox><!-- 
-     --></fieldset>     
+     --></fieldset> 
+        </div>    
     </div>
 
 
