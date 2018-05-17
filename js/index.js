@@ -419,23 +419,23 @@ var app = (function() {
         },
         connect: function(id) {
             setInterval(function() {
-                // http.get('http://10.10.1.1:8081/etag.get_dev_list')
-                Promise.resolve({
-                    success: "true",
-                    objects: [
-                        {
-                            mac: 'abcdef',
-                            h: 30 + Math.random() + '',
-                            t: 27 + Math.random() + '',
-                            g: {
-                                g_x: 1.3 + Math.random() * 0.1 + '',
-                                g_y: 0.01 + Math.random() * 0.05 + '',
-                                g_z: 0.02 + Math.random() * 0.05 + ''
-                            },
-                            lt: '2018-04-13-13-08-58'
-                        }, null
-                    ]
-                })
+                http.get('http://10.10.1.1:8081/etag.get_dev_list')
+                // Promise.resolve({
+                //     success: "true",
+                //     objects: [
+                //         {
+                //             mac: 'abcdef',
+                //             h: 30 + Math.random() + '',
+                //             t: 27 + Math.random() + '',
+                //             g: {
+                //                 g_x: 1.3 + Math.random() * 0.1 + '',
+                //                 g_y: 0.01 + Math.random() * 0.05 + '',
+                //                 g_z: 0.02 + Math.random() * 0.05 + ''
+                //             },
+                //             lt: '2018-04-13-13-08-58'
+                //         }, null
+                //     ]
+                // })
                     .then(function(r) {
                         if (r.success != 'true') {
                             return;
