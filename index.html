@@ -7,11 +7,11 @@
     <meta name="msapplication-tap-highlight" content="no" />
     <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
     <!-- This is a wide open CSP declaration. To lock this down for production, see below. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline'; media-src *" />
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; media-src *" />
     <link rel="stylesheet" type="text/css" href="css/style.css" />
     <link rel="stylesheet" type="text/css" href="css/index.css" />
     <meta name="viewport" content="user-scalable=no, height=device-height, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"/>
-    <title>Where is my cow?</title>
+    <title>eTag Demo</title>
 </head>
 
 <body>
@@ -22,7 +22,7 @@
             margin: 24px 0px 48px 0px;
             line-height: 30px;
         }
-        .sheet h1:after {
+        .sheet h1:before {
             float: right;
             content: '>';
             color: darkorange;
@@ -61,6 +61,7 @@
             background: none;
             width: calc(100% - 108px);
             font-size: 16px;
+            pointer-events: none;
         }
         .sheet fieldset input:focus {
             background-color: #444;
@@ -91,10 +92,11 @@
             padding: 8px 0px;
             overflow-y: auto;
             overflow-x: hidden;
+            white-space: nowrap;
         }
         .sheet[data-active='true'] {
-            padding: 8px 8px;
-            width: 250px;
+            padding: 8px 12px;
+            width: calc(100% - 24px);
         }
         .sheet * {
             color: white;
@@ -105,7 +107,7 @@
             top: 0px;
             left: 0px;
             padding: 8px 12px;
-            background-color: rgb(201,90,39);
+            background-color: rgba(73, 188, 216, 1);
             /*background-image: url('img/banner.png');*/
             background-size: auto calc(100% - 16px);
             background-position: 8px center;
@@ -121,92 +123,7 @@
             margin: 0px;
             background: none;
         }
-        #map {
-            position: absolute;
-            width: 100%;
-            height: calc(100%);
-        }
-        #geofence-canvas {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            -webkit-transition: background-color 0.6s;
-            transition: background-color 0.6s;
-        }
-        #geofence-canvas > button {
-            border: none;
-            position: absolute;
-            bottom: 32px;
-            display: inline-block;
-            padding: 8px 0px;
-            margin: 0px 0px;
-            background-color: gray;
-            width: calc(100% - 32px);
-            left: 16px;
-            height: 36px;
-            font-size: 20px;
-            color: white;
-            border-radius: 4px;
-            outline: none;
-            opacity: 0;
-            pointer-events: none;
-            -webkit-transition: opacity 0.6s;
-            transition: opacity 0.6s;
-        }
-        #geofence-canvas > button#cancel-new-fence {
-            bottom: 80px;
-        }
-        #geofence-canvas > button#create-new-fence {
-            background-color: rgb(201,90,39);
-        }
 
-        #geofence-canvas[data-active] {
-            pointer-events: all;
-            background-color: rgba(150,150,150,0.7);
-            z-index: 1000;
-        }
-        #geofence-canvas[data-active] > button {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        #settings[data-active] {
-            pointer-events: all;
-            opacity: 1;
-        }
-        #settings {
-            float: right;
-            width: 32px;
-            height: 32px;
-            margin-left: 18px !important;
-            background-image: url('img/settings.png') !important;
-            background-size: 24px !important;
-            background-position: center center !important;
-            background-repeat: no-repeat !important;
-            pointer-events: none;
-            opacity: 0;
-            -webkit-transition: opacity 0.6s;
-            transition: opacity 0.6s;
-        }
-        #add-geofence[data-active] {
-            pointer-events: all;
-            opacity: 1;
-        }
-        #add-geofence {
-            float: right;
-            width: 32px;
-            height: 32px;
-            margin-left: 18px !important;
-            background-image: url('img/add-geofence.png') !important;
-            background-size: 24px !important;
-            background-position: center center !important;
-            background-repeat: no-repeat !important;            
-            pointer-events: none;
-            opacity: 0;
-            -webkit-transition: opacity 0.6s;
-            transition: opacity 0.6s;
-        }
         #show-list[data-active] {
             pointer-events: all;
             opacity: 1;
@@ -217,9 +134,9 @@
             height: 32px;
             margin-left: 18px !important;
             background-image: url('img/show-list.png') !important;
-            background-size: auto 24px !important;
+            background-size: 24px !important;
             background-position: center center !important;
-            background-repeat: no-repeat !important;            
+            background-repeat: no-repeat !important;
             pointer-events: none;
             opacity: 0;
             -webkit-transition: opacity 0.6s;
@@ -243,59 +160,6 @@
             background-image: url('img/search.png') !important;            
             color: black;
             width: calc(100% - 48px);
-        }
-
-        #footbar {
-            position: absolute;
-            width: calc(100% - 24px);
-            bottom: 0px;
-            padding: 8px 12px;
-            background-color: rgba(255,255,255,0.2);
-        }
-        #footbar .legend {
-            display: inline-block;
-            font-size: 16px;
-            opacity: 0.4;
-            width: 20%;
-        }
-        #footbar .legend[data-active] {
-            opacity: 1;
-            font-weight: bold;
-        }
-        #footbar .legend[data-always-on] {
-            opacity: 1;
-            font-weight: bold;
-        }
-        #footbar .legend:before {
-            content: '';
-            vertical-align: bottom;
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border-radius: 4px;
-            margin: 2px 4px 2px 0px;
-        }
-        #footbar .legend#all:before {
-            background-color: dimgray;
-        }
-        #footbar .legend#critical:before {
-            background-color: crimson;
-        }
-        #footbar .legend#warning:before {
-            background-color: orange;
-        }
-        #footbar .legend#normal:before {
-            background-color: yellowgreen;
-        }
-        #footbar .legend#escaped:before {
-            background-color: purple;
-        }
-
-        #_device-detail input[data-state="critical"] {
-            color: red;
-        }
-        #_device-detail input[data-state="warning"] {
-            color: orange;
         }
 
         #auto-complete {
@@ -336,99 +200,45 @@
             pointer-events: all;
             opacity: 1 !important;
         }
-
-        #buzz {
+        #charts {
+            position: absolute;
+            top: 48px;
+            height: calc(100% - 48px);
+            padding: 12px;
+            background: black;
+        }
+        #charts > canvas {
+            height: calc((100% - 48px) / 3);
             width: 100%;
-            font-size: 24px;
-            background-color: darkred;
-            border: none;
-            padding: 8px;
-            border-radius: 4px;
-            outline: none;
+            margin-bottom: 8px;
+            background: #222;
+            padding: 0px;
         }
     </style>
 
-    <div id='map'></div>
-    <div id='geofence-canvas'><button id='cancel-new-fence'>Cancel</button><button id='create-new-fence'>Done</button></div>
     <div id='auto-complete'></div>
     <div id='toolbar'><!-- 
-     --><input type='button' data-active='true' id='settings' data-toggle-target='_settings'/><!-- 
-     --><input type='button' data-active='true' id='show-list'/><!-- 
-     --><input type='button' data-active='true' id='add-geofence'/><!-- 
-     --><input type='text' id='search'/><!-- 
-     --><input type='button' id='clear-search'/>
+     --><input type='button' data-active='true' id='show-list' data-toggle-target='_device-list'/>
     </div>
- 
-    <div id='footbar'><!-- 
-     --><div class='group-button' id='state-filter'><!-- 
-         --><span class='legend button' id='all' data-display-mask='15'>30</span><!-- 
-         --><span class='legend button' id='critical' data-display-mask='4'>1</span><!-- 
-         --><span class='legend button' id='warning' data-display-mask='2'>12</span><!-- 
-         --><span class='legend button' id='normal' data-display-mask='1'>17</span><!-- 
-         --><span class='legend button' id='escaped' data-always-on></span><!-- 
-     --></div><!-- 
- --></div>
 
-    <div class='sheet' id='_device-detail'>
-        <h1>Device</h1>
+    <div id='charts'><!-- 
+     --><canvas id='temperature'></canvas><!-- 
+     --><canvas id='humidity'></canvas><!-- 
+     --><canvas id='g-force'></canvas><!-- 
+     --></div>
+
+    <div class='sheet' id='_device-list'>
+        <h1>裝置列表</h1>
         <div>
-        <fieldset><!-- 
-         --><legend>Information</legend><!-- 
-         --><label>IMSI</label><input name='nid'><!-- 
-     --></fieldset>
-        <fieldset><!-- 
-         --><legend>Location</legend><!-- 
-         --><label>Longitude</label><input name='lng'><!-- 
-         --><label>Latitude</label><input name='lat'><!-- 
-         --><label>Last Report</label><input name='lastReportTime'><!-- 
-     --></fieldset>
-        <fieldset><!-- 
-         --><legend>Status</legend><!-- 
-         --><label>Breath rate</label><input name='br'><!-- 
-         --><label>Heart rate</label><input name='hr'><!-- 
-     --></fieldset>
-
-        <button id='buzz'>BUZZ</button>
-        </div>
-     </div>
-    <div class='sheet' id='_settings'>
-        <h1>Settings</h1>
-        <div>
-        <fieldset data-setting='homeLocation'><!-- 
-         --><legend>Home</legend><!-- 
-         --><label>Latitude</label><input id='lat' value=131><!-- 
-         --><label>Longitude</label><input id='lng' value=25><!-- 
-         --><input type='button' id='use-current-location' value='Use current location'></input><!-- 
-     --></fieldset>
-
-        <fieldset data-setting='alarmThreshold'><!-- 
-         --><legend>Critical Alarm</legend><!-- 
-         --><label>Heart rate</label><input id='hr-critical' value=90><!-- 
-         --><label>Breath rate</label><input id='br-critical' value=60><!-- 
-         --><input type='button' id='use-default-threshold' value='Use default threshold'></input><!-- 
-     --></fieldset>
-
-        <fieldset data-setting='alarmThreshold'><!-- 
-         --><legend>Warning Alarm</legend><!-- 
-         --><label>Heart rate</label><input id='hr-warning' value=75><!-- 
-         --><label>Breath rate</label><input id='br-warning' value=45><!-- 
-         --><input type='button' id='use-default-threshold' value='Use default threshold'></input><!-- 
-     --></fieldset>
-
-        <fieldset data-setting='behavior'><!-- 
-         --><legend>Behavior</legend><!-- 
-         --><label>Auto follow</label><input id='autoFollow' type=checkbox><!-- 
-     --></fieldset> 
         </div>    
     </div>
 
 
-    <script src='cordova.js'></script>
+    <!-- <script src='cordova.js'></script> -->
     <script src='js/utility.js'></script>
-
+    <script src='js/http.js'></script>
     <script src='js/index.js'></script>
-    <script src='js/marker-cluster.js'></script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7ooPA5uPKTfvoQXYINNv0u8ybaL_L2w8&callback=onMapReady"></script>
+    <script>app.initialize();</script>
 </body>
 
 </html>
