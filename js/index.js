@@ -419,7 +419,7 @@ var app = (function() {
         },
         connect: function(id) {
             setInterval(function() {
-                http.get('http://10.10.1.1:8081/etag.get_dev_list')
+                $http.get('http://10.10.1.1:8081/etag.get_dev_list')
                 // Promise.resolve({
                 //     success: "true",
                 //     objects: [
