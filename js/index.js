@@ -443,12 +443,13 @@ var app = (function() {
 
                         var devs = r.objects.filter(function(o) { return !!o; });
                         devs.forEach(function(o) {
-                            o.h = Math.round(o.h * 100) / 100;
-                            o.t = Math.round(o.t * 100) / 100;
-                            o.g.g_x = Math.round(o.g.g_x * 100) / 100;
-                            o.g.g_y = Math.round(o.g.g_y * 100) / 100;
-                            o.g.g_z = Math.round(o.g.g_z * 100) / 100;
-                        })
+                            o.h = Math.round(o.h * 1) / 10;
+                            o.t = Math.round(o.t * 1) / 10;
+                            o.g = o.g[0];
+                            o.g.g_x = Math.round(o.g.g_x * 1) / 1000;
+                            o.g.g_y = Math.round(o.g.g_y * 1) / 1000;
+                            o.g.g_z = Math.round(o.g.g_z * 1) / 1000;
+                        });
                         if (history.length === historyLength) {
                             for (var i = 1; i < historyLength; ++i) {
                                 history[i - 1] = history[i];
@@ -477,7 +478,7 @@ var app = (function() {
                                 dev.g.g_x * dev.g.g_x +
                                 dev.g.g_y * dev.g.g_y +
                                 dev.g.g_z * dev.g.g_z
-                            ) * 100) / 100;
+                            ) * 1000) / 1000;
                             var a = $('#_device-list .devitem[data-mac=m' + dev.mac + ']');
                             if (!a) {
                                 $('#_device-list > div').innerHTML += 
