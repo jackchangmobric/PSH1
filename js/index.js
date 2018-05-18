@@ -16,7 +16,7 @@ var app = (function() {
             this.connect();
         },
         connect: function() {
-            ws = new WebSocket('ws://52.191.194.212');
+            // ws = new WebSocket('ws://52.191.194.212');
             ws.open = function() {
                 console.info('connected')
             };
@@ -57,6 +57,14 @@ var app = (function() {
                         pt.escaped = 0;
                     }
                 }
+
+                if (pt.escaped) {
+                    ws.send(JSON.stringify({
+                        nid: pt.nid,
+                        cmd: 'buzz'
+                    }));                    
+                }
+
                 if ($('#_device-detail').getAttribute('data-nid') === pt.nid) {
                     $('#_device-detail input', true).forEach(function(i) {
                         try {
