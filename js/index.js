@@ -16,7 +16,8 @@ var app = (function() {
             this.connect();
         },
         connect: function() {
-            // ws = new WebSocket('ws://52.191.194.212');
+            var tempi;
+            ws = new WebSocket('ws://52.191.194.212');
             ws.open = function() {
                 console.info('connected')
             };
