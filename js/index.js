@@ -412,7 +412,7 @@ var app = (function() {
         selectDevice: function(e) {
             var mac = this.getAttribute('data-mac').substr(1);
             if (selected !== mac) {
-                selected = mac;
+                $('#selected').innerHTML = selected = dev.mac;
                 app.redraw();
             }
             console.info(mac);
@@ -449,6 +449,11 @@ var app = (function() {
                             o.g.g_x = Math.round(o.g.g_x * 1) / 1000;
                             o.g.g_y = Math.round(o.g.g_y * 1) / 1000;
                             o.g.g_z = Math.round(o.g.g_z * 1) / 1000;
+                            o.g.sum = Math.round(Math.sqrt(
+                                o.g.g_x * o.g.g_x +
+                                o.g.g_y * o.g.g_y +
+                                o.g.g_z * o.g.g_z
+                            ) * 1000) / 1000;
                         });
                         if (history.length === historyLength) {
                             for (var i = 1; i < historyLength; ++i) {
@@ -471,14 +476,9 @@ var app = (function() {
 
                         devs.forEach(function(dev) {
                             if (!selected) {
-                                selected = dev.mac;
+                                $('#selected').innerHTML = selected = dev.mac;
                             }
 
-                            dev.g.sum = Math.round(Math.sqrt(
-                                dev.g.g_x * dev.g.g_x +
-                                dev.g.g_y * dev.g.g_y +
-                                dev.g.g_z * dev.g.g_z
-                            ) * 1000) / 1000;
                             var a = $('#_device-list .devitem[data-mac=m' + dev.mac + ']');
                             if (!a) {
                                 $('#_device-list > div').innerHTML += 
