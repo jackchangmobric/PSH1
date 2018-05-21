@@ -412,14 +412,14 @@ var app = (function() {
         selectDevice: function(e) {
             var mac = this.getAttribute('data-mac').substr(1);
             if (selected !== mac) {
-                $('#selected').innerHTML = selected = dev.mac;
+                $('#selected').innerHTML = selected = mac;
                 app.redraw();
             }
             console.info(mac);
         },
         connect: function(id) {
             setInterval(function() {
-                $http.get('http://10.10.1.1:8081/etag.get_dev_list')
+                $http.get('http://52.191.194.212:8080/etag.get_dev_list')
                 // Promise.resolve({
                 //     success: "true",
                 //     objects: [
@@ -437,7 +437,8 @@ var app = (function() {
                 //     ]
                 // })
                     .then(function(r) {
-                        if (r.success != 'true') {
+                        console.info(r.success + '' == 'true');
+                        if ((r.success + '') != 'true') {
                             return;
                         }
 
@@ -514,7 +515,7 @@ var app = (function() {
                         app.redraw();
                     })
                     .catch(function(e) {
-                        app.alert(e);
+                        // app.alert(e);
                     });
             }, 1000);
         }

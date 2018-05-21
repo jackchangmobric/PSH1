@@ -4,6 +4,7 @@ var $http = (function() {
         if (options) {
             uri += ('?' + Object.keys(options).map(function(k) { return [k, options[k]].join('='); }).join('&'));
         }
+        console.info(uri);
         return uri;
     };
     var timeout = null;
