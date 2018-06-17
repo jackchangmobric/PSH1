@@ -17,11 +17,36 @@ var $string = function(format, options) {
 };
 
 var $activate = function(a, en) { 
-    if (en) { a.setAttribute('data-active', true); }
-    else    { a.removeAttribute('data-active'); } 
+    if (!en) {
+        a.removeAttribute('data-active');
+    }
+    else if (a.className !== 'sheet') {
+        a.setAttribute('data-active', true);
+    }
+    else {
+        $('.sheet', true).forEach(function(t) {
+            if (t === a) {
+                t.setAttribute('data-active', true);
+            }
+            else {
+                t.removeAttribute('data-active');
+            }
+        });
+    }
 };
 var $toggle = function (a) {
     $activate(a, !a.hasAttribute('data-active'));
+};
+
+var $bind = function(a, evt, handler, bubble) {
+    if (typeof evt === 'string') {
+        a.addEventListener(evt, handler, bubble);
+    }
+    else {
+        evt.forEach(function(e) {
+            a.addEventListener(e, handler, bubble);
+        });
+    }
 };
 
 var $kv = (function() {

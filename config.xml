@@ -1,11 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.phonegap.helloworld" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
-    <name>etag-demo-app</name>
+<widget id="com.jt.mifi.smartpotato.demo" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
+    <name>Where are my potatos?</name>
     <description>
-        Hello World sample application that responds to the deviceready event.
     </description>
     <author email="support@phonegap.com" href="http://phonegap.com">
-        PhoneGap Team
     </author>
     <content src="index.html" />
     <preference name="DisallowOverscroll" value="true" />
@@ -13,7 +11,7 @@
     <plugin name="cordova-plugin-battery-status" source="npm" spec="~1.1.1" />
     <plugin name="cordova-plugin-camera" source="npm" spec="~2.1.1" />
     <plugin name="cordova-plugin-media-capture" source="npm" spec="~1.2.0" />
-    <plugin name="cordova-plugin-console" source="npm" spec="~1.0.2" />
+    <plugin name="cordova-plugin-console" source="npm" spec="1.1.0" />
     <plugin name="cordova-plugin-contacts" source="npm" spec="~2.0.1" />
     <plugin name="cordova-plugin-device" source="npm" spec="~1.1.1" />
     <plugin name="cordova-plugin-device-motion" source="npm" spec="~1.2.0" />
@@ -114,4 +112,5 @@
         <allow-intent href="itms:*" />
         <allow-intent href="itms-apps:*" />
     </platform>
+    <engine name="ios" spec="~4.5.4" />
 </widget>

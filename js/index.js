@@ -1,7 +1,122 @@
+function onMapReady() { app.initialize(); };
+
+//'' + now.getFullYear() + (now.getMonth() + 1) + now.getDate() + '-' + opt.nid
+
+var dateString = function(date) {
+    return [date.getFullYear(),
+            date.getMonth() + 1,
+            date.getDate()].join('/') + ' ' +
+           [('00' + date.getHours()).substr(-2),
+            ('00' + date.getMinutes()).substr(-2)].join(':');
+};
+
 var app = (function() {     
-    var history = [];
-    var historyLength = 100;
-    var selected = null;
+    var points = {};
+    var markers = {};
+    var map = null;
+    var focus = null;
+    var ws = null;
+
+    var updating = false;
+    var pthistory = [];
+    var showDetails = function(pt) {
+        $('#_device-detail input', true).forEach(function(i) {
+            if (!i.name) { return; }
+            i.value = (pt[i.name] || '').toString();
+        });
+
+        if (updating) { return; }
+
+        var now = Date.now();
+        for (var i = 6; i >= 0; --i) {
+            var d = new Date(now - i * 86400000);
+            ws.send(JSON.stringify({
+                nid:pt.nid,
+                date: '' + d.getFullYear() + (d.getMonth() + 1) + d.getDate()
+            }));
+        }
+        pthistory = [];
+        updating = true;
+    };
+
+    var drawbar = function(canvas, values, umin, umax) {
+        var ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        var gap = 0.3;
+        var min = (umin !== undefined) ? umin : 0;
+        var max = (umax !== undefined) ? umax : values.reduce(function(p, c) { return Math.max(p, c); }, 0) * 1.1;
+        var w = canvas.width / (((values.length + 1) * gap) + values.length);
+        var h = canvas.height / (max - min);
+        console.info(w, h, values)
+        ctx.fillStyle = 'orange';
+        for (var i = 0; i < values.length; ++i) {
+            ctx.beginPath();
+            ctx.rect(w * (i + (i + 1) * gap), canvas.height - h * values[i], w, h * values[i]);
+            ctx.fill();
+        }
+        ctx.strokeStyle = 'white';
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.stroke();
+        ctx.closePath();
+    };
+
+    var drawline = function(canvas, values, umin, umax) {
+        var ctx = canvas.getContext('2d');
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        var min = (umin !== undefined) ? umin : 0;
+        var max = (umax !== undefined) ? umax : values.reduce(function(p, c) { return Math.max(p, c); }, 0) * 1.1;
+        var w = canvas.width / (values.length - 1);
+        var h = canvas.height / (max - min);
+        ctx.strokeStyle = 'orange';
+        ctx.strokeWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height - values[0] * h);
+        for (var i = 1; i < values.length; ++i) {
+            ctx.lineTo(w * i, canvas.height - values[i] * h);
+        }
+        ctx.stroke();
+        ctx.closePath();
+        ctx.strokeStyle = 'white';
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.stroke();
+        ctx.closePath();
+    };
+
+    var redraw = function() {
+        console.info('redraw ' + pthistory.length);
+        if (pthistory.length !== 7) { return; }
+
+        var k = $('#chart-display').getAttribute('data-value');
+        var r = $('#chart-display').getAttribute('data-range').split(',').map(function(v) { return v * 1; });
+        var avg = pthistory.map(function(o) {
+            var l = o.filter(function(c) { return c; });
+            if (l.length === 0) { return 0; }
+            return l.reduce(function(p, c) {
+                    if (!c) { return p; }
+                    return p + c[k] * 1;
+                }, 0) / l.length;
+        });
+
+        drawbar($('#weekly-chart'), avg, r[0], r[1]);
+
+        var pts = [];
+        var lnow = Date.now() - 86400000;
+        pthistory.forEach(function(l) {
+            pts = pts.concat(l.filter(function(c) { return c && c.lastReport >= lnow; }));
+        });
+        var dl = pts.sort(function(a, b) { return a.lastReport - b.lastReport; });
+        drawline($('#daily-chart'), dl.map(function(a) { return a[k]; }), r[0], r[1]);
+
+        updating = false;
+    };
 
     return {
         // Application Constructor
@@ -10,20 +125,73 @@ var app = (function() {
             this.bindEvents();
             this.connect();
         },
+        connect: function() {
+            ws = new WebSocket('ws://52.191.194.212');
+            ws.onopen = function() {
+                console.info('connected');
+                // ws.send(JSON.stringify({nid:'466011801360317', date:'2018616'}));
+            };
+            ws.onmessage = function(evt) {
+                var pt = JSON.parse(evt.data);
+                if (pt.date) {
+                    if (updating) {
+                        var pe = (pt.data) ? pt.data.filter(function(o) { return o; }) : [];
+                        pe.forEach(function(p) {
+                            p.t /= 10;
+                            p.h /= 10;
+                        })
+                        pthistory.push(pe);
+                    }
+                    return redraw();
+                }
+
+                if (!pt.nid) {
+                    return;
+                }
+
+                console.info(pt);
+
+                pt.lat *= 1;
+                pt.lng *= 1;
+                pt.h /= 10;
+                pt.t /= 10;
+                pt.lastReportTime = dateString(new Date(pt.lastReport * 1));
+
+                if ($('#_device-detail').getAttribute('data-nid') === pt.nid) {
+                    showDetails(pt);
+                }
+
+                var compare = function(p, k) {
+                    if (p[k] * 1 > $('#' + k + '-h').value * 1) {
+                        return 4;
+                    }
+                    if (p[k] * 1 < $('#' + k + '-l').value * 1) {
+                        return 2;
+                    }
+                    return 1;
+                };
+
+                pt.state = Math.max(Math.max(
+                    compare(pt, 'm'),
+                    compare(pt, 't')),
+                    compare(pt, 'h'));
+
+                points[pt.nid] = pt;
+                app.redraw();
+            };
+        },
         initViews: function() {
-<<<<<<< HEAD
             // document.body.requestFullscreen();
-=======
->>>>>>> 2f3bf295c52e6b3061293c8fddcc20bf6338478b
             // init sheet close
             $('.sheet > h1', true).forEach(function(a) {
-                a.addEventListener('click', function() { $activate(a.parentNode, false); });
+                $bind(a, 'click', function() { $activate(a.parentNode, false); });
             });
+
+
 
             // init togglers
             $('*[data-toggle-target]', true).forEach(function(a) {
-                a.addEventListener('click', function() {
-                    console.info(a);
+                $bind(a, 'click', function() {
                     $toggle($('#' + this.getAttribute('data-toggle-target')));
                 });
             })
@@ -34,13 +202,15 @@ var app = (function() {
                     self = this;
                     $(b, '.button', true).forEach(function(_a) {
                         $activate(_a, _a === self);
+                        b.setAttribute('data-value', self.getAttribute('data-value'))
+                        b.setAttribute('data-range', self.getAttribute('data-range'))
                     });
                 };
                 $(b, '.button', true).forEach(function(a) { 
                     if (a.hasAttribute('data-always-on')) {
                         return;
                     }
-                    a.addEventListener('touchstart', onclick); 
+                    $bind(a, ['mouseup', 'touchstart'], onclick); 
                 });
                 onclick.call($(b, '.button', true)[0]);
             });
@@ -57,471 +227,160 @@ var app = (function() {
                     $kv.set(key, v);
                 };
                 $('[data-setting="' + key + '"] input', true).forEach(function(i) {
-                    i.addEventListener('change', onchange);
+                    $bind(i, 'change', onchange);
                 });
             });            
         },
         bindEvents: function() {
-            document.addEventListener('deviceready', this.onDeviceReady, false);
+            setTimeout(this.onDeviceReady, 0);
 
-            // $('#search').addEventListener('focus', function() {
-            //     $('#toolbar > input[type=button]', true).forEach(function(a) {
-            //         if (a.id === 'clear-search') { 
-            //             $activate(a, true);
-            //         }
-            //         else {
-            //             $activate(a, false);
-            //         }
-            //     });
-            // });
-            // $('#search').addEventListener('blur', function() {
-            //     $activate($('#clear-search'), false);
-            //         setTimeout(function() {
-            //         $('#toolbar > input[type=button]', true).forEach(function(a) {
-            //             if (a.id !== 'clear-search') { 
-            //                 $activate(a, true);
-            //             }
-            //         });
-            //     }, 0);
-            // });
+            map = new google.maps.Map(document.getElementById('map'), {
+                disableDefaultUI: true,
+                mapTypeControl: false,
+                gestureHandling: 'greedy',
+                zoom: 14,
+                center: {lat: -28.024, lng: 140.887}
+            });
 
-            // $('#show-list').addEventListener('touchstart', function() {
-            //     $('#auto-complete').innerHTML = Object.keys(points)
-            //         .map(function(nid) {
-            //             return points[nid];
-            //         })
-            //         .sort(function(a, b) {
-            //             if (a.escaped) {
-            //                 return -1;
-            //             }
-            //             else {
-            //                 return b.state - a.state;
-            //             }
-            //         })
-            //         .map(function(dev) {
-            //             return $string('<div data-state="{{state}}" data-nid="{{nid}}">{{nid}}</div>', dev);
-            //         }).join('');
-            //     $toggle($('#auto-complete'));
-            // });
+            $('#chart-display .button', true).forEach(function(btn) {
+                $bind(btn, ['mouseup', 'touchend'], function() {
+                    redraw();
+                });
+            });
 
-            // $('#search').addEventListener('keyup', function() {
-            //     var v = $('#search').value;
-            //     if (!v) {
-            //         $activate($('#auto-complete'), false);
-            //         return;
-            //     }
+            $bind($('#search'), 'focus', function() {
+                $('#toolbar > input[type=button]', true).forEach(function(a) {
+                    if (a.id === 'clear-search') { 
+                        $activate(a, true);
+                    }
+                    else {
+                        $activate(a, false);
+                    }
+                });
+            });
+            $bind($('#search'), 'blur', function() {
+                $activate($('#clear-search'), false);
+                    setTimeout(function() {
+                    $('#toolbar > input[type=button]', true).forEach(function(a) {
+                        if (a.id !== 'clear-search') { 
+                            $activate(a, true);
+                        }
+                    });
+                }, 0);
+            });
 
-            //     var l = Object.keys(points).filter(function(nid) {
-            //         return nid.indexOf(v) !== -1;
-            //     });
-            //     if (l.length === 0) {
-            //         $activate($('#auto-complete'), false);
-            //     }
-            //     else {
-            //         $('#auto-complete').innerHTML = l.map(function(nid) {
-            //             return $string('<div data-nid="{{nid}}">{{nid}}</div>', points[nid]);
-            //         }).join('');
-            //         $activate($('#auto-complete'), true);                    
-            //     }
-            // });
+            $bind($('#search'), 'keyup', function() {
+                var v = $('#search').value;
+                if (!v) {
+                    $activate($('#auto-complete'), false);
+                    return;
+                }
 
+                var l = Object.keys(points).filter(function(nid) {
+                    return nid.indexOf(v) !== -1;
+                });
+                if (l.length === 0) {
+                    $activate($('#auto-complete'), false);
+                }
+                else {
+                    $('#auto-complete').innerHTML = l.map(function(nid) {
+                        return $string('<div data-nid="{{nid}}">{{nid}}</div>', points[nid]);
+                    }).join('');
+                    $activate($('#auto-complete'), true);                    
+                }
+            });
 
-            // $('#buzz').addEventListener('touchstart', function() {
-            //     var nid = $('#_device-detail').getAttribute('data-nid');
-            //     if (!nid) {
-            //         return;
-            //     }
+            $bind($('#clear-search'), 'touchend', function() {
+                setTimeout(function() {
+                    $('#search').blur();
+                }, 0);
+                $('#search').value = '';
+                focus = null;
+                $activate($('#auto-complete'), false);
+            });
 
-            //     ws.send(JSON.stringify({
-            //         nid: nid,
-            //         cmd: 'buzz'
-            //     }));
-            // });
+            $bind($('#auto-complete'), ['mouseup', 'touchstart'], function(e) {
+                var nid = e.target.getAttribute('data-nid');
+                console.info(e);
+                if (!nid) {
+                    return;
+                }
 
-            // $('#clear-search').addEventListener('touchend', function() {
-            //     setTimeout(function() {
-            //         $('#search').blur();
-            //     }, 0);
-            //     $('#search').value = '';
-            //     focus = null;
-            //     $activate($('#auto-complete'), false);
-            // });
+                $activate($('#auto-complete'), false);                    
+                $('#search').value = nid;
+                focus = nid;
+                map.setCenter({
+                    lat: points[nid].lat,
+                    lng: points[nid].lng
+                });
+            });
 
-            // $('#auto-complete').addEventListener('touchstart', function(e) {
-            //     var nid = e.target.getAttribute('data-nid');
-            //     if (!nid) {
-            //         return;
-            //     }
-
-            //     $activate($('#auto-complete'), false);                    
-            //     $('#search').value = nid;
-            //     focus = nid;
-            //     map.setCenter({
-            //         lat: points[nid].lat,
-            //         lng: points[nid].lng
-            //     });
-            // });
-
-            // $('#use-current-location').addEventListener('click', function() {
-            //     $('#lat').value = Math.round(map.getCenter().lat() * 10000) / 10000;
-            //     $('#lng').value = Math.round(map.getCenter().lng() * 10000) / 10000;
-            //     $('#lat').dispatchEvent(new Event('change'));
-            // });
-
-            // $('#state-filter [data-display-mask]', true).forEach(function(i) {
-            //     i.addEventListener('click', function() {
-            //         app.redraw();
-            //     });
-            // });
-
-            // (function() {
-            //     var fence = null;
-                
-            //     bounds = $kv.get('geofence');
-            //     if (!!bounds.pt1 && !!bounds.pt2) {
-            //         fence = new google.maps.Rectangle({
-            //             strokeColor: '#0033FF',
-            //             strokeOpacity: 0.8,
-            //             strokeWeight: 2,
-            //             fillColor: '#0033FF',
-            //             fillOpacity: 0.2,
-            //             map: map,
-            //             bounds: {
-            //                 north: Math.max(bounds.pt1.lat, bounds.pt2.lat),
-            //                 south: Math.min(bounds.pt1.lat, bounds.pt2.lat),
-            //                 east: Math.max(bounds.pt1.lng, bounds.pt2.lng),
-            //                 west: Math.min(bounds.pt1.lng, bounds.pt2.lng)
-            //             }
-            //         });
-            //     }
-
-            //     $('#add-geofence').addEventListener('touchstart', function() {
-            //         if (fence) {
-            //             fence.setMap(null);
-            //         }
-            //         $activate($('#geofence-canvas'), true);
-            //     });
-
-            //     var point2LatLng = function (pt) {
-            //         var tr = map.getProjection().fromLatLngToPoint(map.getBounds().getNorthEast());
-            //         var bl = map.getProjection().fromLatLngToPoint(map.getBounds().getSouthWest());
-            //         var scale = Math.pow(2, map.getZoom());
-            //         var wp = new google.maps.Point(pt.clientX / scale + bl.x, pt.clientY / scale + tr.y);
-            //         return map.getProjection().fromPointToLatLng(wp).toJSON();
-            //     };
-            //     var pt1 = null;
-            //     var pt2 = null;
-            //     var rect = null;
-            //     $('#geofence-canvas').addEventListener('touchstart', function(e) {
-            //         if (!$('#geofence-canvas').hasAttribute('data-active')) {
-            //             return;
-            //         }
-
-            //         if (rect) {
-            //             rect.setMap(null);
-            //             rect = pt1 = pt2 = null;
-            //         }
-            //         pt1 = pt2 = point2LatLng(e.changedTouches[0]);
-            //         rect = new google.maps.Rectangle({
-            //             strokeColor: '#FF0000',
-            //             strokeOpacity: 0.8,
-            //             strokeWeight: 2,
-            //             fillColor: '#FF0000',
-            //             fillOpacity: 0.2,
-            //             map: map,
-            //             bounds: {
-            //                 north: pt1.lat,
-            //                 south: pt1.lat,
-            //                 east: pt1.lng,
-            //                 west: pt1.lng
-            //             }
-            //         });
-            //     });
-            //     $('#geofence-canvas').addEventListener('touchmove', function(e) {
-            //         pt2 = point2LatLng(e.changedTouches[0]);
-            //         rect.setOptions({
-            //             bounds: {
-            //                 north: Math.max(pt1.lat, pt2.lat),
-            //                 south: Math.min(pt1.lat, pt2.lat),
-            //                 east: Math.max(pt1.lng, pt2.lng),
-            //                 west: Math.min(pt1.lng, pt2.lng)
-            //             }
-            //         });
-            //     });
-            //     $('#geofence-canvas').addEventListener('touchend', function(e) {
-            //     });
-            //     $('#create-new-fence').addEventListener('touchstart', function(e) {
-            //         $kv.set('geofence', bounds = {
-            //             pt1: pt1,
-            //             pt2: pt2
-            //         });
-            //         $activate($('#geofence-canvas'), false);
-            //         if (fence) {
-            //             fence.setMap(null);
-            //         }
-            //         fence = rect;
-            //         fence.setOptions({
-            //             strokeColor: '#0033FF',
-            //             fillColor: '#0033FF',
-            //         });
-            //         pt1 = pt2 = rect = null;
-            //     }, true);
-            //     $('#cancel-new-fence').addEventListener('touchstart', function(e) {
-            //         if (rect) {
-            //             rect.setMap(null);
-            //         }
-
-            //         if (fence) {
-            //             fence.setMap(map);
-            //         }
-            //         $activate($('#geofence-canvas'), false);
-            //         pt1 = pt2 = rect = null;
-            //     }, true);
-            // })();
+            $bind($('#use-current-location'), 'click', function() {
+                $('#lat').value = Math.round(map.getCenter().lat() * 10000) / 10000;
+                $('#lng').value = Math.round(map.getCenter().lng() * 10000) / 10000;
+                $('#lat').dispatchEvent(new Event('change'));
+            });
         },
         redraw: function() {
-            var drawchart = function(canvas, reset, color, values, title, range) {
-                var ctx = canvas.getContext('2d');
-                if (reset) {
-                    canvas.width = canvas.offsetWidth;
-                    canvas.height = canvas.offsetHeight;                    
+            Object.keys(points).map(function(k) { return points[k]; }).forEach(function(pt, i) {
+                var marker = markers[pt.nid];
+                if (marker) {
+                    marker.setPosition({ lat: pt.lat * 1, lng: pt.lng * 1 });                    
                 }
-                var w = canvas.width;
-                var h = canvas.height;
-                var m = 8;
-                var max = range[0];
-                var min = range[1];
-                var mid = (max + min) / 2;
-                var xstep = (w) / values.length;
-                var yrange = (h - 2 * m);
-                var ybase = max - min;
-                var xyset = values.map(function(v, i) {
-                    var y = yrange * (max - v) / ybase;
-                    return [xstep * i, m + y];
-                });
-
-                if (reset) {
-                    var gstep = range[2];
-                    var gcenter = range[3];
-                    for (var i = Math.ceil(min / gstep) * gstep; i < max; i += gstep) {
-                        if (i === gcenter) {
-                            ctx.strokeStyle = '#777';  
-                        }
-                        else {
-                            ctx.strokeStyle = '#555';
-                        }
-                        ctx.lineWidth = 1;
-                        ctx.beginPath();
-                        ctx.moveTo(0, m + yrange * (max - i) / ybase);
-                        ctx.lineTo(w, m + yrange * (max - i) / ybase);
-                        ctx.stroke();
-                        ctx.closePath();
-                    }
-                }
-
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = color;
-                ctx.beginPath();
-                ctx.moveTo(xyset[0][0], xyset[0][1]);
-                for (var i = 1; i < xyset.length; ++i) {
-                    ctx.lineTo(xyset[i][0], xyset[i][1]);
-                }
-                ctx.stroke();
-                ctx.closePath();
-
-
-                if (reset) {
-                    ctx.beginPath();
-                    ctx.font = '24px Verdana';
-                    ctx.fillStyle = 'white';
-                    ctx.fillText(title, 0, 20);
-                    ctx.closePath();                    
-                }
-            };
-
-            var last = history[historyLength - 1][selected];
-            drawchart($('#temperature'), true, 'orange', history.map(function(o) {
-                return o[selected].t;
-            }), '溫度 - ' + last.t + ' ºC', [60, -20, 10, 0]);
-
-            drawchart($('#humidity'), true, 'lightblue', history.map(function(o) {
-                return o[selected].h;
-            }), '相對濕度 - ' + last.h + ' %', [100, 0, 10, 40]);
-
-            drawchart($('#g-force'), true, 'lightgreen', history.map(function(o) {
-                return o[selected].g.g_x;
-            }), '震動 - ' + last.g.sum + ' g', [2, 0, 0.4, 1]);
-            drawchart($('#g-force'), false, 'lightblue', history.map(function(o) {
-                return o[selected].g.g_y;
-            }), '', [2, 0]);
-            drawchart($('#g-force'), false, 'lightyellow', history.map(function(o) {
-                return o[selected].g.g_z;
-            }), '', [2, 0]);
-            drawchart($('#g-force'), false, 'red', history.map(function(o) {
-                return o[selected].g.sum;
-            }), '', [2, 0]);
-
-
-            // if (Object.keys(markerClusters).length === 0) {
-            //     for (var i = 0; i < $('#state-filter [data-display-mask]', true).length - 1; ++i) {
-            //         var p = Math.pow(2, i);
-            //         markerClusters[p] = new MarkerClusterer(map, [], {
-            //             imagePath: 'img/mc-' + p + 'm'
-            //         });
-            //     }
-            // }
-            // Object.keys(markerClusters).forEach(function(k) {
-            //     markerClusters[k].clearMarkers();
-            // });
-
-            // var mask = $('#state-filter [data-active]').getAttribute('data-display-mask') * 1;
-            // Object.keys(points).map(function(k) { return points[k]; }).forEach(function(pt, i) {
-            //     var marker = new google.maps.Marker({
-            //         position: { lat: pt.lat * 1, lng: pt.lng * 1 },
-            //         label: pt.nid,
-            //         icon: 'img/m' + pt.state + '.png'
-            //     });
-            //     markerClusters[pt.state].addMarkers([marker], false);
-            //     marker.addListener('click', function(e) {
-            //         var pt = points[this.label];
-            //         $('#_device-detail input', true).forEach(function(i) {
-            //             if (!i.name) { return; }
-            //             i.value = (pt[i.name] || '').toString();
-            //         });
-            //         $('#_device-detail').setAttribute('data-nid', this.label);
-            //         $activate($('#_device-detail'), true);
-            //     });
-            // });
-            // $('#escaped').innerHTML = Object.keys(points).filter(function(k) {
-            //     return points[k].escaped;
-            // }).length;
-
-            // $('#all').innerHTML = Object.keys(points).length;
-            // $('[data-display-mask]', true).forEach(function(m) {
-            //     var mc = markerClusters[m.getAttribute('data-display-mask')];
-            //     if (mc) {
-            //         m.innerHTML = mc.getMarkers().length;
-            //     }
-            // });
-            // Object.keys(markerClusters).forEach(function(k) {
-            //     if (!(k & mask)) {
-            //         markerClusters[k].clearMarkers();
-            //     }
-            //     markerClusters[k].redraw();
-            // });
-        },
-        alert: function(e) {
-            alert(e);
-        },
-        selectDevice: function(e) {
-            var mac = this.getAttribute('data-mac').substr(1);
-            if (selected !== mac) {
-                $('#selected').innerHTML = selected = mac;
-                app.redraw();
-            }
-            console.info(mac);
-        },
-        connect: function(id) {
-            setInterval(function() {
-                $http.get('http://52.191.194.212:8080/etag.get_dev_list')
-                // Promise.resolve({
-                //     success: "true",
-                //     objects: [
-                //         {
-                //             mac: 'abcdef',
-                //             h: 30 + Math.random() + '',
-                //             t: 27 + Math.random() + '',
-                //             g: [{
-                //                 g_x: 1.3 + Math.random() * 0.1 + '',
-                //                 g_y: 0.01 + Math.random() * 0.05 + '',
-                //                 g_z: 0.02 + Math.random() * 0.05 + ''
-                //             }],
-                //             lt: '2018-04-13-13-08-58'
-                //         }, null
-                //     ]
-                // })
-                    .then(function(r) {
-                        console.info(r.success + '' == 'true');
-                        if ((r.success + '') != 'true') {
-                            return;
-                        }
-
-                        var devs = r.objects.filter(function(o) { return !!o; });
-                        devs.forEach(function(o) {
-                            o.h = Math.round(o.h * 1) / 10;
-                            o.t = Math.round(o.t * 1) / 10;
-                            o.g = o.g[0];
-                            o.g.g_x = Math.round(o.g.g_x * 1) / 1000;
-                            o.g.g_y = Math.round(o.g.g_y * 1) / 1000;
-                            o.g.g_z = Math.round(o.g.g_z * 1) / 1000;
-                            o.g.sum = Math.round(Math.sqrt(
-                                o.g.g_x * o.g.g_x +
-                                o.g.g_y * o.g.g_y +
-                                o.g.g_z * o.g.g_z
-                            ) * 1000) / 1000;
-                        });
-                        if (history.length === historyLength) {
-                            for (var i = 1; i < historyLength; ++i) {
-                                history[i - 1] = history[i];
-                            }
-                            history[historyLength - 1] = devs.reduce(function(p, c) {
-                                p[c.mac] = c;
-                                return p;
-                            }, {});
-                        }
-                        else {
-                            var en = devs.reduce(function(p, c) {
-                                p[c.mac] = c;
-                                return p;
-                            }, {});
-                            for (var i = 0; i < historyLength; ++i) {
-                                history[i] = en;
-                            }
-                        }
-
-                        devs.forEach(function(dev) {
-                            if (!selected) {
-                                $('#selected').innerHTML = selected = dev.mac;
-                            }
-
-                            var a = $('#_device-list .devitem[data-mac=m' + dev.mac + ']');
-                            if (!a) {
-                                $('#_device-list > div').innerHTML += 
-                                    '<fieldset class="devitem" data-mac="m' + dev.mac + '">' +
-                                        '<legend data-bind="mac"></legend>' +
-                                        '<label>溫度</label>' +
-                                        '<input data-bind="t" readonly="readonly"><br>' +
-                                        '<label>相對濕度</label>' +
-                                        '<input data-bind="h" readonly="readonly"><br>' +
-                                        '<label>震動</label>' +
-                                        '<input data-bind="g.sum" readonly="readonly"><br>' +
-                                        '<label>最後回報時間</label>' +
-                                        '<input data-bind="lt" readonly="readonly"><br>' +
-                                    '</fieldset>';
-                            }
-                        });
-                        setTimeout(function() {
-                            devs.forEach(function(dev) {
-                                var a = $('#_device-list .devitem[data-mac=m' + dev.mac + ']');
-                                if (!a.onclick) {
-                                    a.onclick = app.selectDevice;
-                                }
-                                $(a, '[data-bind]', true).forEach(function(i) {
-                                    if (i.readOnly) {
-                                        i.value = eval('dev.' + i.getAttribute('data-bind'));
-                                    }
-                                    else {
-                                        i.innerHTML = eval('dev.' + i.getAttribute('data-bind')); 
-                                    }
-                                });
-                            });
-                        }, 0);
-                        app.redraw();
-                    })
-                    .catch(function(e) {
-                        // app.alert(e);
+                else {
+                    marker = markers[pt.nid] = new google.maps.Marker({
+                        map: map,
+                        position: { lat: pt.lat * 1, lng: pt.lng * 1 },
+                        label: pt.nid,
+                        icon: 'img/m' + pt.state + '.png'
                     });
-            }, 1000);
+                }
+                marker.addListener('click', function(e) {
+                    var pt = points[this.label];
+                    showDetails(pt);
+                    $('#_device-detail').setAttribute('data-nid', this.label);
+                    $activate($('#_device-detail'), true);
+                });
+            });
+        },
+        loadSettings: function() {
+            $('[data-setting]', true).forEach(function(a) {
+                var key = a.getAttribute('data-setting');
+                var val = $kv.get(key);
+                console.info(key, val)
+                Object.keys(val).forEach(function(k) {
+                    $('#' + k).value = val[k];
+                });
+            });
+            return Promise.resolve();
+        },
+        getCurrentLocation: function() {
+            return new Promise(function(ok, ng) {
+                var hl = $kv.get('homeLocation');
+                if (hl && hl.lat  !== undefined && hl.lng !== undefined) {
+                    map.setCenter(hl);
+                    return ok();
+                }
+
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    console.info(pos);
+                    map.setCenter({
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude
+                    });
+                    ok();
+                }, function(err) {
+                    ng(err.message);
+                });
+            });
+        },
+        onDeviceReady: function(id) {
+            Promise.all([
+                app.loadSettings(),
+                app.getCurrentLocation(),
+            ]).then(function() {
+                app.redraw();
+            });
         }
     }; 
 })();
