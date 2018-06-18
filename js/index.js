@@ -42,7 +42,8 @@ var app = (function() {
         updating = true;
     };
 
-    var drawbar = function(canvas, values, umin, umax) {
+    var label = 16;
+    var drawbar = function(canvas, values, labels, umin, umax) {
         var ctx = canvas.getContext('2d');
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
@@ -51,23 +52,30 @@ var app = (function() {
         var min = (umin !== undefined) ? umin : 0;
         var max = (umax !== undefined) ? umax : values.reduce(function(p, c) { return Math.max(p, c); }, 0) * 1.1;
         var w = canvas.width / (((values.length + 1) * gap) + values.length);
-        var h = canvas.height / (max - min);
+        var h = (canvas.height - label) / (max - min);
         console.info(w, h, values)
         ctx.fillStyle = 'orange';
         for (var i = 0; i < values.length; ++i) {
             ctx.beginPath();
-            ctx.rect(w * (i + (i + 1) * gap), canvas.height - h * values[i], w, h * values[i]);
+            ctx.rect(w * (i + (i + 1) * gap), canvas.height - h * values[i] - label, w, h * values[i]);
             ctx.fill();
         }
         ctx.strokeStyle = 'white';
         ctx.beginPath();
-        ctx.moveTo(0, canvas.height);
-        ctx.lineTo(canvas.width, canvas.height);
+        ctx.moveTo(0, canvas.height - label);
+        ctx.lineTo(canvas.width, canvas.height - label);
         ctx.stroke();
         ctx.closePath();
+
+        ctx.font = '12pt helvetica';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'gray';
+        for (var i = 0; i < labels.length; ++i) {
+            ctx.fillText(labels[i], w * (i + (i + 1) * gap + 0.5), canvas.height);
+        }
     };
 
-    var drawline = function(canvas, values, umin, umax) {
+    var drawline = function(canvas, values, labels, umin, umax) {
         var ctx = canvas.getContext('2d');
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
@@ -75,22 +83,30 @@ var app = (function() {
         var min = (umin !== undefined) ? umin : 0;
         var max = (umax !== undefined) ? umax : values.reduce(function(p, c) { return Math.max(p, c); }, 0) * 1.1;
         var w = canvas.width / (values.length - 1);
-        var h = canvas.height / (max - min);
+        var h = (canvas.height - label) / (max - min);
         ctx.strokeStyle = 'orange';
         ctx.strokeWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(0, canvas.height - values[0] * h);
+        ctx.moveTo(canvas.width / (values.length + 1), canvas.height - values[0] * h - label);
         for (var i = 1; i < values.length; ++i) {
-            ctx.lineTo(w * i, canvas.height - values[i] * h);
+            ctx.lineTo(canvas.width / (values.length + 1) * (i + 1), canvas.height - values[i] * h - label);
         }
         ctx.stroke();
         ctx.closePath();
+
         ctx.strokeStyle = 'white';
         ctx.beginPath();
-        ctx.moveTo(0, canvas.height);
-        ctx.lineTo(canvas.width, canvas.height);
+        ctx.moveTo(0, canvas.height - label);
+        ctx.lineTo(canvas.width, canvas.height - label);
         ctx.stroke();
         ctx.closePath();
+
+        ctx.font = '12pt helvetica';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'gray';
+        for (var i = 0; i < labels.length; ++i) {
+            ctx.fillText(labels[i], canvas.width / (labels.length + 1) * (i + 1), canvas.height);
+        }
     };
 
     var redraw = function() {
@@ -108,15 +124,42 @@ var app = (function() {
                 }, 0) / l.length;
         });
 
-        drawbar($('#weekly-chart'), avg, r[0], r[1]);
+        var days = [];
+        for (var i = 0; i < 7; ++i) {
+            days.push(new Date(Date.now() - (6 - i) * 86400000).getDay())
+        }
+        drawbar($('#weekly-chart'), avg, days.map(function(d) {
+            if (d === 0) { return 'SUN'; }
+            if (d === 1) { return 'MON'; }
+            if (d === 2) { return 'TUE'; }
+            if (d === 3) { return 'WED'; }
+            if (d === 4) { return 'THU'; }
+            if (d === 5) { return 'FRI'; }
+            if (d === 6) { return 'SAT'; }
+        }), r[0], r[1]);
 
         var pts = [];
         var lnow = Date.now() - 86400000;
         pthistory.forEach(function(l) {
             pts = pts.concat(l.filter(function(c) { return c && c.lastReport >= lnow; }));
         });
+
+        var hours = [];
+        for (var i = 0; i < 24; ++i) {
+            hours.push(('00' + i).substr(-2) + ':00');
+        }
         var dl = pts.sort(function(a, b) { return a.lastReport - b.lastReport; });
-        drawline($('#daily-chart'), dl.map(function(a) { return a[k]; }), r[0], r[1]);
+        var values = hours.map(function() { return 0; })
+        dl.forEach(function(a) {
+            var h = new Date(a.lastReport).getHours();
+            values[h] = Math.max(values[h], a[k]);
+        });
+        for (var i = 0; i < hours.length; ++i) {
+            if (i % 4) {
+                hours[i] = '';
+            }
+        }
+        drawline($('#daily-chart'), values, hours, r[0], r[1]);
 
         updating = false;
     };
