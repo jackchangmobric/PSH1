@@ -10,6 +10,9 @@ var dateString = function(date) {
             ('00' + date.getMinutes()).substr(-2)].join(':');
 };
 
+var mmax = 2100;
+var mmin = 500;
+
 var app = (function() {     
     var points = {};
     var markers = {};
@@ -139,6 +142,8 @@ var app = (function() {
                         pe.forEach(function(p) {
                             p.t /= 10;
                             p.h /= 10;
+                            p.m *= 1;
+                            p.m = (p.m) ? mmax - p.m : 0;
                         })
                         pthistory.push(pe);
                     }
@@ -156,6 +161,9 @@ var app = (function() {
                 pt.h /= 10;
                 pt.t /= 10;
                 pt.lastReportTime = dateString(new Date(pt.lastReport * 1));
+                // pt.m2 = 100 - Math.round(Math.sqrt(pt.m2) / pt.m * 1000) / 10;
+                pt.m *= 1;
+                pt.m = (pt.m) ? mmax - pt.m : 0;
 
                 if ($('#_device-detail').getAttribute('data-nid') === pt.nid) {
                     showDetails(pt);
