@@ -10,8 +10,8 @@ var dateString = function(date) {
             ('00' + date.getMinutes()).substr(-2)].join(':');
 };
 
-var mmax = 2100;
-var mmin = 500;
+var mmax = 200000;
+var mmin = 30;
 
 var app = (function() {     
     var points = {};
