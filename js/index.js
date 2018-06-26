@@ -35,7 +35,7 @@ var app = (function() {
             var d = new Date(now - i * 86400000);
             ws.send(JSON.stringify({
                 nid:pt.nid,
-                date: '' + d.getFullYear() + (d.getMonth() + 1) + d.getDate()
+                date: '' + d.getUTCFullYear() + (d.getUTCMonth() + 1) + d.getUTCDate()
             }));
         }
         pthistory = [];
@@ -115,19 +115,29 @@ var app = (function() {
 
         var k = $('#chart-display').getAttribute('data-value');
         var r = $('#chart-display').getAttribute('data-range').split(',').map(function(v) { return v * 1; });
-        var avg = pthistory.map(function(o) {
-            var l = o.filter(function(c) { return c; });
-            if (l.length === 0) { return 0; }
-            return l.reduce(function(p, c) {
-                    if (!c) { return p; }
-                    return p + c[k] * 1;
-                }, 0) / l.length;
-        });
 
         var days = [];
         for (var i = 0; i < 7; ++i) {
             days.push(new Date(Date.now() - (6 - i) * 86400000).getDay())
         }
+
+        var now = Date.now();
+        var avg = days.map(function() { return [0, 0]; });
+        pthistory.forEach(function(o) {
+            var l = o.filter(function(c) { return c; });
+            if (l.length === 0) { return; }
+
+            l.forEach(function(o) {
+                var t = 6 - Math.floor((now - o.lastReport) / 86400000);
+                avg[t][0] += 1;
+                avg[t][1] += o[k] * 1;
+            });
+        });
+        avg = avg.map(function(v) {
+            return (v[0]) ? v[1] / v[0] : 0;
+        });
+
+        var lnow = now - 86400000;
         drawbar($('#weekly-chart'), avg, days.map(function(d) {
             if (d === 0) { return 'SUN'; }
             if (d === 1) { return 'MON'; }
@@ -139,7 +149,6 @@ var app = (function() {
         }), r[0], r[1]);
 
         var pts = [];
-        var lnow = Date.now() - 86400000;
         pthistory.forEach(function(l) {
             pts = pts.concat(l.filter(function(c) { return c && c.lastReport >= lnow; }));
         });
